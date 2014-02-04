@@ -37,7 +37,8 @@ spy.replay({frames: cache, loop: true});
 
 The test file included, does BOTH; it records for a few seconds then loops the playback.
 
-The playback is slightly sluggish at this point but it does the job.
+On playback your frames are submitted as fast as possible. The playback may become slower or faster depending on
+the difference between the played-back environment and the recording environment.
 
 When you play back, you can choose whether or not to loop. If you do not loop, when you are done
 with the recorded frames, the controller will no longer send any data out.
