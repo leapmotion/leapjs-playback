@@ -97,7 +97,7 @@ spy.on('maxFrames', function(){
     console.log('frames: ',data);
     cache.push.apply(cache, data.frames);
     if (cache.length >= 1000){
-        spy.replay({frames: cache, loop: true});
+        spy.replay({frames: cache, loop: true, play_same_frames: true});
         replaying = true;
     }
 });

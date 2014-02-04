@@ -24,20 +24,35 @@
 
         this._frame_data_index = 0;
         this.controller = controller;
+        this._timestamps = [];
         this._spy();
     }
 
     Spy.prototype = {
 
+        /**
+         * This is the maximum amount of elapsed time between the last measurement and the current frame
+         */
+        MAX_ACCEPTABLE_REPORTED_DELTA: 500,
+
         _spy: function () {
 
             // removing all listeners to ensure that the spy's listener runs first
-            this._dataHandler = this.controller.connection.handleData;
+            this._originalDataHandler = this.controller.connection.handleData;
             this.controller.connection.handleData = this._handleData.bind(this);
+
+            this.controller.on('frame', function () {
+                if (!this._playback) {
+                    if (this._frame_data.length) {
+                        this._frame_data[this._frame_data.length - 1][2] = true; // recording that the last frame
+                        // recieved from the web server was actually played in the animation frame;
+                    }
+                }
+            }.bind(this));
         },
 
         stop: function () {
-            this.controller.connection.handleData = this._dataHandler;
+            this.controller.connection.handleData = this._originalDataHandler;
         },
 
         on: function (event, handler) {
@@ -65,7 +80,7 @@
 
         _current_frame: function (frame) {
             if (frame) {
-                this._frame_data[this._index()] = frame;
+                this._frame_data[this._index()] = [frame, new Date().getTime()];
                 return frame;
             } else {
                 return this._frame_data[this._index()];
@@ -104,18 +119,35 @@
 
         _playback: false,
 
+        _play: function () {
+
+            var data = this._current_frame();
+            if (data[0].length > 200){
+                try {
+                    var frame = new Leap.Frame(JSON.parse(data[0]));
+                    this.controller.processFrame(frame);
+                    this.lastFrame = frame;
+                } catch(err){
+                    // ignoring parsing error
+                }
+            }
+
+            this._playback.current_frame = this._index();
+            this._advance();
+        },
+
         _handleData: function (data) {
 
             if (this._playback) {
-              /*  try {
-                    this._dataHandler.call(this.controller.connection, this._current_frame());
-                } catch(err){
-                }
-                this._advance();*/
+                /*  try {
+                 this._originalDataHandler.call(this.controller.connection, this._current_frame());
+                 } catch(err){
+                 }
+                 this._advance();*/
             } else {
                 this._current_frame(data);
                 this._advance();
-                this._dataHandler.call(this.controller.connection, data);
+                this._originalDataHandler.call(this.controller.connection, data);
             }
 
         },
@@ -129,26 +161,25 @@
                 params = {loop: true};
             }
 
-            if (params && typeof params == 'object' && params.frames) {
-                this._frame_data = params.frames;
-                this._frame_data_index = 0;
-                this.max_frames = params.frames.length;
+            if (params && typeof params == 'object') {
+                if (params.frames) {
+                    this._frame_data = params.frames;
+                    this._frame_data_index = 0;
+                    this.max_frames = params.frames.length;
+                }
             }
 
+            this.controller.disconnect();
 
             this._playback = params;
             var spy = this;
-            this.controller.on('animationFrame', function(){
+            this.controller.on('animationFrame', function () {
                 if (spy._playback.done) {
                     return;
                 }
-                try {
-                    spy._dataHandler.call(spy.controller.connection, spy._current_frame());
-                } catch(err){
-                }
-                spy._playback.current_frame = spy._index();
-                spy._advance();
-                if (!spy._playback.loop && (spy._playback.current_frame > spy._index())){
+                spy._play();
+
+                if (!spy._playback.loop && (spy._playback.current_frame > spy._index())) {
                     spy._playback.done = true;
                 }
             }.bind(this));
