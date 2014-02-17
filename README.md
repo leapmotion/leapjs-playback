@@ -42,3 +42,9 @@ the difference between the played-back environment and the recording environment
 
 When you play back, you can choose whether or not to loop. If you do not loop, when you are done
 with the recorded frames, the controller will no longer send any data out.
+
+## Examples
+
+`leap_non_skeleton` uses the 0.4.0 javascript to play the classic "pre skeleton" css3 visualizer.
+
+`leap_skeleton` uses the leap-skeleton javascript to play the current "skeleton" e

@@ -139,11 +139,10 @@
         _handleData: function (data) {
 
             if (this._playback) {
-                /*  try {
-                 this._originalDataHandler.call(this.controller.connection, this._current_frame());
-                 } catch(err){
-                 }
-                 this._advance();*/
+                /**
+                 * We are not recording data or responding to data
+                 * when playing back data
+                 */
             } else {
                 this._current_frame(data);
                 this._advance();
