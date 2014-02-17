@@ -127,10 +127,11 @@
                 if (_.isString(frame_info)) {
                     frame_info = JSON.parse(frame_info);
                 }
-
-                var frame = new Leap.Frame(frame_info);
-                this.controller.processFrame(frame);
-                this.lastFrame = frame;
+                if (frame_info.hands) {
+                    var frame = new Leap.Frame(frame_info);
+                    this.controller.processFrame(frame);
+                    this.lastFrame = frame;
+                };
             } catch (err) {
                 console.log('err:', err);
                 // ignoring parsing error

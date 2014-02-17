@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/leapmotion/leapjs-spy/issues"
   },
-  "homepage": "https://github.com/leapmotion/leapjs-spy"
+  "homepage": "https://github.com/leapmotion/leapjs-spy",
+  "dependencies": {
+    "node-static": "~0.7.3"
+  }
 }

@@ -133,7 +133,7 @@
                     this.lastFrame = frame;
                 };
             } catch (err) {
-                console.log('err:', err);
+                lele.log('err:', err);
                 // ignoring parsing error
             }
 
