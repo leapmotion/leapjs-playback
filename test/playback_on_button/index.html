@@ -8,6 +8,7 @@
             top: 25em;
             left: 10em;
             display: block;
+            width: 100%;
         }
         #script-form textarea {
             border: 1px solid black;
@@ -31,7 +32,14 @@
 
 
 <form action="index.html" id="script-form" method="post">
-  <label><b>Script:</b></label>
+    <div style="float:right; width: 60%">
+
+        <p> <input type="radio" value="first" name="save-mode" checked="checked" /> first.. <input type="radio"
+                                                                                               value="last"
+                                                                                  name="save-mode" /> last...</p>
+        <p><input type="range" min="50" value="50" max="500" step="25" id="max-frames" />
+            <span id="max-frames-text">50</span> frames saved.  </p>
+    </div>  <label><b>Script:</b></label>
     <textarea id="transcript" rows="8" cols="50"></textarea>
     <br />
     <button id="record-button" type="button">Record Action</button>
@@ -39,6 +47,7 @@
     <button id="playback" type="button">Playback Script</button>
 <br />
     <button id="playback2" type="button">Play second</button>
+
 </form>
 <div id="second-display">
 

@@ -186,10 +186,21 @@
         var parse = function (item) {
             return [JSON.parse(item)];
         };
+        var max_frames = Number($('#max-frames').val());
 
-        $('#transcript').val(JSON.stringify(_.map(cache, parse)));
+        var mode = $('#save-mode').val();
+        if (mode == 'first'){
+            var data = cache.slice(0, Math.max(0, max_frames));
+        } else {
+            var data = cache.slice(Math.max(cache.length - max_frames, 0));
+        }
+        $('#transcript').val(JSON.stringify(_.map(data, parse)));
         return false;
     });
+
+    $('#max-frames').change(function(){
+        $('#max-frames-text').text($('#max-frames').val());
+    })
 
     $('#playback').click(function () {
         $.get('script.json', function (data) {
