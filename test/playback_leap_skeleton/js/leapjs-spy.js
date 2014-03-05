@@ -1,5 +1,14 @@
 (function () {
 
+    // stubbing underscore's toString methods -- plus some
+    if (typeof _ == 'undefined'){
+        var _ = {};
+        each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp'], function(name) {
+            _['is' + name] = function(obj) {
+                return toString.call(obj) == '[object ' + name + ']';
+            };
+        });
+    }
     /**
      * Spy is a recorder of frames. Note that it constantly overwrites
      * itself when the frames exceed the max_frames.
@@ -160,6 +169,8 @@
 
         },
 
+        paused: false, // set to true to temporarily interrupt playback
+
         replay: function (params) {
             if (!params) {
                 params = true;
@@ -186,7 +197,9 @@
                 if (!spy._playback || spy._playback.done) {
                     return;
                 }
-                spy._play();
+                if (!spy.paused){
+                    spy._play();
+                }
 
                 if (!spy._playback.loop && (spy._playback.current_frame > spy._index())) {
                     spy._playback.done = true;
