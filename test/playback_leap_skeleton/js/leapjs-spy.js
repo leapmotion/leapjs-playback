@@ -3,12 +3,15 @@
     // stubbing underscore's toString methods -- plus some
     if (typeof _ == 'undefined'){
         var _ = {};
-        each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp'], function(name) {
+        var fields = ['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp'];
+        for (var f = 0; f < fields.length; ++ f){
+            var __name = fields[f]
             _['is' + name] = function(obj) {
                 return toString.call(obj) == '[object ' + name + ']';
             };
-        });
+        };
     }
+
     /**
      * Spy is a recorder of frames. Note that it constantly overwrites
      * itself when the frames exceed the max_frames.
@@ -169,7 +172,7 @@
 
         },
 
-        paused: false, // set to true to temporarily interrupt playback
+        paused: false, // set to true to interrupt playback without returning control to Leap Controller
 
         replay: function (params) {
             if (!params) {
@@ -197,6 +200,7 @@
                 if (!spy._playback || spy._playback.done) {
                     return;
                 }
+
                 if (!spy.paused){
                     spy._play();
                 }

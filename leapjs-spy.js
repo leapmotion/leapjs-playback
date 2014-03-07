@@ -3,11 +3,13 @@
     // stubbing underscore's toString methods -- plus some
     if (typeof _ == 'undefined'){
         var _ = {};
-        each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp'], function(name) {
+        var fields = ['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp'];
+        for (var f = 0; f < fields.length; ++ f){
+            var __name = fields[f]
             _['is' + name] = function(obj) {
                 return toString.call(obj) == '[object ' + name + ']';
             };
-        });
+        };
     }
 
     /**
