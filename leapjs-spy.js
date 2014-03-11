@@ -1,4 +1,4 @@
-(function () {
+(function (root) {
 
     // stubbing underscore's toString methods -- plus some
     if (typeof _ == 'undefined'){
@@ -65,6 +65,7 @@
 
         stop: function () {
             this.controller.connection.handleData = this._originalDataHandler;
+            this._playback = false;
         },
 
         on: function (event, handler) {
@@ -132,6 +133,9 @@
         _playback: false,
 
         _play: function () {
+            if (!this._playback || this.paused){
+                return;
+            }
 
             var data = this._current_frame();
             var frame_info = data[0];
@@ -173,6 +177,19 @@
         },
 
         paused: false, // set to true to interrupt playback without returning control to Leap Controller
+
+        pause: function(){
+            this.paused = true;
+        },
+
+        resume: function(){
+          if (this._playback){
+              this.paused = false;
+              this._play();
+          } else {
+              throw new Error('must call replay before resuming');
+          }
+        },
 
         replay: function (params) {
             if (!params) {
@@ -217,12 +234,12 @@
         }
     };
 
-    if (!window.LeapUtils) {
-        window.LeapUtils = {};
+    if (!root.LeapUtils) {
+        root.LeapUtils = {};
     }
 
-    window.LeapUtils.record_controller = function (controller, params) {
+    root.LeapUtils.record_controller = function (controller, params) {
         return new Spy(controller, params);
     }
 
-})(window);
+})(root);

@@ -4,12 +4,12 @@ leapjs-spy
 Listen, record, play back and save raw hand gesture
 
 The leapjs-spy.js file must be loaded after the Leap.js library.
-
-Left alone it will not affect the Leap.
+The spy library does not affect the `Leap.controller` until you attach a spy to it and tell the spy to record or play
+ back a prerecorded session.
 
 There are two ways to use it:
 
-1) record a set of frames that you can save out;
+## 1: record a set of frames that you can save out;
 
 ``` javascript
 
@@ -24,7 +24,7 @@ spy.on('maxFrames', function(data){
 console.log('frame data', data);
 
 ```
-2) play back a set of frames from a saved set
+## 2: play back a set of frames from a saved set
 
 ``` javascript
 
@@ -35,6 +35,8 @@ spy.replay({frames: cache, loop: true});
 
 ```
 
+## 3: record, then play back
+
 The test file included, does BOTH; it records for a few seconds then loops the playback.
 
 On playback your frames are submitted as fast as possible. The playback may become slower or faster depending on
@@ -42,6 +44,10 @@ the difference between the played-back environment and the recording environment
 
 When you play back, you can choose whether or not to loop. If you do not loop, when you are done
 with the recorded frames, the controller will no longer send any data out.
+
+## Multiple playback and looped playback
+
+There is nothing that prevents you from sending data to multiple recorders
 
 ## Examples
 
@@ -105,3 +111,22 @@ pattern of loading to
 ```
 
 in example code to get it to work because `Leap.loop(...)` does not expose the controller.
+
+## Notes on Environment and installation
+
+This is not a github module; pending public / OS release by LeapMotion this is still a private codebease,
+Copyright © 2014, Leap Motion, Inc.
+
+Leapjs-spy is of course a JavaScript module and only works in browser-based environments. It has only been tested on
+late model browsers (Chrome, Firefox) but should be at least as cross-browser compatible as the Leap library itself.
+
+No guarantee is made as to how leapjs-spy works on Node.
+
+## Playback speed
+
+Leap is usually driven by an outside web socket. This is more efficient because the single thread that drives the
+creation of data is not part of the same javascript DOM thread that drives dom event listening et al.
+
+Because of this you may notice a c. 5% slowness in playback. This is fine for most cases but in enviroments where
+you are interacting with physics that have their own time-dependant behaviors no guarantee is made that playing
+back the same data will have the same interations in yoiur scene as manual control.
