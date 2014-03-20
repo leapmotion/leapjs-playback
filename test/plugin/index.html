@@ -1,0 +1,17 @@
+<html>
+<head>
+  <script src="vendor/three.min.js"></script>
+  <script src="vendor/leap-skeleton.js"></script>
+  <script src="vendor/leap.rigged-hand.js"></script>
+  <script src="../../leap-spy.js"></script>
+</head>
+<body>
+
+<script>
+  (new Leap.Controller).
+      use('riggedHand').
+      use('playback', {frames: '../playback_on_button/script.json'})
+</script>
+
+</body>
+</html>

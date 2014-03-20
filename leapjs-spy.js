@@ -241,8 +241,15 @@
         }
     }
 
-    root.LeapUtils.record_controller = function (controller, params) {
-        return new Spy(controller, params);
-    }
+    Leap.plugin('playback', function(scope){
+            var frames = scope.frames;
+            if (!frames) throw new Error('No playback frames provided');
+            // By doing this, we allow scope.pause() and scope.resume()
+            scope = new Spy(this);
+            scope.replay({frames: frames});
+            return {}
+        }
+    );
+
 
 })(window);
