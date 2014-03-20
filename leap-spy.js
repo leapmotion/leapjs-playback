@@ -151,6 +151,8 @@
             this.controller.processFrame(frame);
             this.lastFrame = frame;
 
+            console.log(frame.hands.length);
+
             this._playback.current_frame = this._index();
             this._advance();
         },
@@ -239,15 +241,50 @@
         }
     }
 
-    Leap.plugin('playback', function(scope){
-            var frames = scope.frames;
-            if (!frames) throw new Error('No playback frames provided');
-            // By doing this, we allow scope.pause() and scope.resume()
-            scope = new Spy(this);
-            scope.replay({frames: frames});
-            return {}
-        }
-    );
+  Leap.plugin('playback', function (scope) {
+
+      var loadAjaxJSON = function ( callback, url) {
+        var xhr = new XMLHttpRequest();
+
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === xhr.DONE) {
+            if (xhr.status === 200 || xhr.status === 0) {
+              if (xhr.responseText) {
+                callback(JSON.parse(xhr.responseText));
+              } else {
+                console.error('Leap Playback: "' + url + '" seems to be unreachable or the file is empty.');
+              }
+            } else {
+              console.error('Leap Playback: Couldn\'t load "' + url + '" (' + xhr.status + ')');
+            }
+          }
+        };
+
+        xhr.open("GET", url, true);
+        xhr.send(null);
+      };
+
+      var frames = scope.frames;
+      if (!frames) throw new Error('No playback frames provided');
+
+      // By doing this, we allow scope.pause() and scope.resume()
+      // this is the controller
+      scope = new Spy(this);
+
+      var replay = function(frames){
+        scope.replay({frames: frames});
+      }
+
+      if (typeof frames == 'string') {
+        loadAjaxJSON(replay, frames);
+      } else {
+        replay(frames)
+      }
+
+
+      return {}
+    }
+  );
 
 
 })(window);

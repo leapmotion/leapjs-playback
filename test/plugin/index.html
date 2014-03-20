@@ -2,15 +2,20 @@
 <head>
   <script src="vendor/three.min.js"></script>
   <script src="vendor/leap-skeleton.js"></script>
+  <script src="vendor/leap-plugins-0.1.3.js"></script>
   <script src="vendor/leap.rigged-hand.js"></script>
   <script src="../../leap-spy.js"></script>
 </head>
 <body>
 
 <script>
-  (new Leap.Controller).
-      use('riggedHand').
-      use('playback', {frames: '../playback_on_button/script.json'})
+  (new Leap.Controller)
+      .use('handHold')
+      .use('handEntry')
+      .use('riggedHand')
+      .connect()
+//      .use('playback', {frames: '../playback_on_button/script.json'})
+      .use('playback', {frames: '../../recordings/gun.json'})
 </script>
 
 </body>
