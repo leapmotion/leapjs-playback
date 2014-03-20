@@ -265,22 +265,22 @@
       };
 
       var frames = scope.frames;
-      if (!frames) throw new Error('No playback frames provided');
-
-      // By doing this, we allow scope.pause() and scope.resume()
-      // this is the controller
-      scope = new Spy(this);
-
-      var replay = function(frames){
-        scope.replay({frames: frames});
+      if (frames) {
+    
+          // By doing this, we allow scope.pause() and scope.resume()
+          // this is the controller
+          scope = new Spy(this);
+    
+          var replay = function(frames){
+            scope.replay({frames: frames});
+          }
+    
+          if (typeof frames == 'string') {
+            loadAjaxJSON(replay, frames);
+          } else {
+            replay(frames)
+          }
       }
-
-      if (typeof frames == 'string') {
-        loadAjaxJSON(replay, frames);
-      } else {
-        replay(frames)
-      }
-
 
       return {}
     }
