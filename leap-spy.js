@@ -51,10 +51,14 @@
         MAX_ACCEPTABLE_REPORTED_DELTA: 500,
 
         _spy: function () {
+            var spy = this;
 
             // removing all listeners to ensure that the spy's listener runs first
             this._originalDataHandler = this.controller.connection.handleData;
-            this.controller.connection.handleData = this._handleData.bind(this);
+            this.controller.connection.handleData = function() {
+                spy._handleData.apply(spy, arguments);
+                spy._originalDataHandler.apply(spy.controller.connection, arguments);
+            }
 
             this.controller.on('frame', function () {
                 if (!this._playback) {
