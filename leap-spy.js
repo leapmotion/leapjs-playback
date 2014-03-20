@@ -154,9 +154,6 @@
             var frame = new Leap.Frame(frame_info);
             this.controller.processFrame(frame);
             this.lastFrame = frame;
-
-            console.log(frame.hands.length);
-
             this._playback.current_frame = this._index();
             this._advance();
         },
