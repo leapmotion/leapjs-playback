@@ -175,11 +175,11 @@
 
         paused: false, // set to true to interrupt playback without returning control to Leap Controller
 
-        pause: function(){
+        pause: function() {
             this.paused = true;
         },
 
-        resume: function(){
+        resume: function() {
           if (this._playback){
               this.paused = false;
               this._play();
