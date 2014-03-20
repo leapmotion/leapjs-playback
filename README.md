@@ -71,7 +71,7 @@ Note, to play back the `script.json` file, you must run the test `app.js` node f
 
 ```
 
-then go to [localhost:8080/playback_on_button/index.html](localhost:8080/playback_on_button/index.html)
+then go to [localhost:8080/playback_on_button/index.html](http://localhost:8080/playback_on_button/index.html)
 on your browser.
 
 It can play back on one of two panels, and you can hit the button more than once.
