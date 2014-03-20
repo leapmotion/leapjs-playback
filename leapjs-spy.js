@@ -14,29 +14,32 @@
 
     /**
      * Spy is a recorder of frames. Note that it constantly overwrites
-     * itself when the frames exceed the max_frames.
+     * itself when the frames exceed the maxFrames.
      *
-     * @param spy_params {Object|number} an optional value to set the number of frames trapped
+     * @param params {Object|number} an optional value to set the number of frames trapped or a hash of options
+     *  - maxFrames {number}
+     *  - onMaxFrames {function} a callback for when the frame limit is hit
+     *  
+     * 
      * @constructor
      */
-    function Spy(controller, spy_params) {
+    function Spy(controller, params) {
         this._frame_data = [];
-        this.max_frames = 10000;
-        if (spy_params) {
-            if (!isNaN(spy_params)) {
-                this.max_frames = spy_params;
-            } else if (spy_params.max_frames) {
-                this.max_frames = spy_params.max_frames;
+        this.maxFrames = 10000;
+        if (params) {
+            if (!isNaN(params)) {
+                this.maxFrames = params;
+            } else if (params.maxFrames) {
+                this.maxFrames = params.maxFrames;
             }
 
-            if (spy_params.on_max_frames) {
-                this.on('maxFrames', spy_params.on_max_frames.bind(this));
+            if (params.onMaxFrames) {
+                this.on('maxFrames', params.onMaxFrames.bind(this));
             }
         }
 
         this._frame_data_index = 0;
         this.controller = controller;
-        this._timestamps = [];
         this._spy();
     }
 
@@ -57,7 +60,7 @@
                 if (!this._playback) {
                     if (this._frame_data.length) {
                         this._frame_data[this._frame_data.length - 1][2] = true; // recording that the last frame
-                        // recieved from the web server was actually played in the animation frame;
+                        // received from the web server was actually played in the animation frame;
                     }
                 }
             }.bind(this));
@@ -101,12 +104,12 @@
         },
 
         _index: function () {
-            return this._frame_data_index % this.max_frames;
+            return this._frame_data_index % this.maxFrames;
         },
 
         _advance: function () {
             this._frame_data_index += 1;
-            if (!(this._frame_data_index % this.max_frames) && !this._playback) {
+            if (!(this._frame_data_index % this.maxFrames) && !this._playback) {
                 this.emit('maxFrames');
             }
         },
@@ -119,14 +122,14 @@
         /**
          * returns a set of frames; "unspools" the frames stack.
          * note, the index is NOT the length of the frames.
-         * @returns {{frames: [Frame], index: int, max_frames: int}}
+         * @returns {{frames: [Frame], index: int, maxFrames: int}}
          */
         data: function () {
             return {
                 frames: this._frames(),
                 first_frame: this._frame_data_index - this._frame_data.length,
                 last_frame: this._frame_data_index,
-                max_frames: this.max_frames
+                maxFrames: this.maxFrames
             };
         },
 
@@ -139,18 +142,15 @@
 
             var data = this._current_frame();
             var frame_info = data[0];
-            try {
-                if (_.isString(frame_info)) {
-                    frame_info = JSON.parse(frame_info);
-                }
-                if (frame_info.hands) {
-                    var frame = new Leap.Frame(frame_info);
-                    this.controller.processFrame(frame);
-                    this.lastFrame = frame;
-                };
-            } catch (err) {
-                console.log('err:', err);
-                // ignoring parsing error
+
+            if (typeof(frame_info) == 'string') {
+                frame_info = JSON.parse(frame_info);
+            }
+
+            if (frame_info.hands) {
+                var frame = new Leap.Frame(frame_info);
+                this.controller.processFrame(frame);
+                this.lastFrame = frame;
             }
 
             this._playback.current_frame = this._index();
@@ -167,11 +167,7 @@
             } else {
                 this._current_frame(data);
                 this._advance();
-                try {
-                    this._originalDataHandler.call(this.controller.connection, data);
-                } catch(err){
-                    console.log('error: %s', err);
-                }
+                this._originalDataHandler.call(this.controller.connection, data);
             }
 
         },
@@ -191,6 +187,11 @@
           }
         },
 
+        /* Plays back the provided frame data
+         * Params {object|boolean}:
+         *  - frames: previously recorded frame json
+          * - loop: whether or not to loop playback.  Defaults to true.
+         */
         replay: function (params) {
             if (!params) {
                 params = true;
@@ -204,7 +205,7 @@
                 if (params.frames) {
                     this._frame_data = params.frames;
                     this._frame_data_index = 0;
-                    this.max_frames = params.frames.length;
+                    this.maxFrames = params.frames.length;
                 }
             }
 
@@ -234,12 +235,14 @@
         }
     };
 
-    if (!root.LeapUtils) {
-        root.LeapUtils = {};
+    if (root.LeapUtils) {
+        root.LeapUtils.record_controller = function (controller, params) {
+            return new Spy(controller, params);
+        }
     }
 
     root.LeapUtils.record_controller = function (controller, params) {
         return new Spy(controller, params);
     }
 
-})(root);
+})(window);
