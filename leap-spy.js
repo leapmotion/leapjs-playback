@@ -194,12 +194,16 @@
           * - loop: whether or not to loop playback.  Defaults to true.
          */
         replay: function (params) {
-            if (!params) {
+            if (params === undefined) {
                 params = true;
             }
 
-            if (params === true) {
-                params = {loop: true};
+            if (params === true || params === false) {
+                params = {loop: params};
+            }
+
+            if (params.loop === undefined) {
+                params.loop = true;
             }
 
             if (params && typeof params == 'object') {
