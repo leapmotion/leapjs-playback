@@ -153,7 +153,6 @@
 
             var frame = new Leap.Frame(frame_info);
             this.controller.processFrame(frame);
-            this.lastFrame = frame;
             this._playback.current_frame = this._index();
             this._advance();
         },
@@ -224,9 +223,7 @@
                     return;
                 }
 
-                if (!spy.paused){
-                    spy._play();
-                }
+                spy._play();
 
                 if (!spy._playback.loop && (spy._playback.current_frame > spy._index())) {
                     spy._playback.done = true;
