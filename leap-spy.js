@@ -51,14 +51,9 @@
         MAX_ACCEPTABLE_REPORTED_DELTA: 500,
 
         _spy: function () {
-            var spy = this;
-
             // removing all listeners to ensure that the spy's listener runs first
             this._originalDataHandler = this.controller.connection.handleData;
-            this.controller.connection.handleData = function() {
-                spy._handleData.apply(spy, arguments);
-                spy._originalDataHandler.apply(spy.controller.connection, arguments);
-            }
+            this.controller.connection.handleData = this._handleData.bind(this);
 
             this.controller.on('frame', function () {
                 if (!this._playback) {
@@ -98,6 +93,7 @@
             this._advance();
         },
 
+        // pushes a new frame on to frame data, or returns the latest frame
         _current_frame: function (frame) {
             if (frame) {
                 this._frame_data[this._index()] = [frame, new Date().getTime()];
@@ -147,16 +143,15 @@
             var data = this._current_frame();
             var frame_info = data[0];
 
-            if (typeof(frame_info) == 'string') {
-                frame_info = JSON.parse(frame_info);
-            }
-
             var frame = new Leap.Frame(frame_info);
+
+            // send a device frame to the controller:
             this.controller.processFrame(frame);
             this._playback.current_frame = this._index();
             this._advance();
         },
 
+        // this allows
         _handleData: function (data) {
 
             if (this._playback) {
@@ -274,7 +269,7 @@
           scope = new Spy(this);
     
           var replay = function(frames){
-            scope.replay({frames: frames});
+            scope.replay({frames: frames.frames});
           }
     
           if (typeof frames == 'string') {
