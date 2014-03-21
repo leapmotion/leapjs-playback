@@ -1,7 +1,7 @@
 <html>
 <head>
   <script src="vendor/three.min.js"></script>
-  <script src="vendor/leap-skeleton-0.4.3.js"></script>
+  <script src="vendor/leap-skeleton-deviceEvents.js"></script>
   <script src="vendor/leap-plugins-0.1.3.js"></script>
   <script src="vendor/leap.rigged-hand.js"></script>
   <script src="../../leap-spy.js"></script>
@@ -9,13 +9,12 @@
 <body>
 
 <script>
-  (new Leap.Controller)
+  (window.controller = new Leap.Controller)
       .use('handHold')
       .use('handEntry')
       .use('riggedHand')
+      .use('playback', {frames: 'brian.json', onlyWhenDisconnected: true})
       .connect()
-
-      .use('playback', {frames: 'brian.json'})
 //      .use('playback', {frames: '../../recordings/gun.json'})
 </script>
 

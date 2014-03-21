@@ -57,6 +57,7 @@
 
             this.controller.on('frame', function () {
                 if (!this._playback) {
+                    console.log('recording');
                     if (this._frame_data.length) {
                         this._frame_data[this._frame_data.length - 1][2] = true; // recording that the last frame
                         // received from the web server was actually played in the animation frame;
@@ -208,8 +209,6 @@
                 }
             }
 
-            this.controller.disconnect();
-
             this._playback = params;
             var spy = this;
 
@@ -225,7 +224,6 @@
                 } else {
                     requestAnimationFrame(_replay);
                 }
-
             };
 
             requestAnimationFrame(_replay);
@@ -238,6 +236,7 @@
         }
     }
 
+  // will only play back if device is disconnected
   Leap.plugin('playback', function (scope) {
 
       var loadAjaxJSON = function ( callback, url) {
@@ -262,14 +261,18 @@
       };
 
       var frames = scope.frames;
+      var controller = this;
+      var onlyWhenDisconnected = scope.onlyWhenDisconnected;
+
       if (frames) {
-    
           // By doing this, we allow scope.pause() and scope.resume()
           // this is the controller
           scope = new Spy(this);
     
           var replay = function(frames){
-            scope.replay({frames: frames.frames});
+            if (onlyWhenDisconnected && controller.streamingCount == 0){
+//              scope.replay({frames: frames.frames});
+            }
           }
     
           if (typeof frames == 'string') {
@@ -277,6 +280,18 @@
           } else {
             replay(frames)
           }
+      }
+
+      if (onlyWhenDisconnected){
+        this.on('streamingStarted', function(){
+           console.log('ready');
+           scope.stop()
+        });
+        this.on('streamingStopped', function(){
+          console.log('disconnected', frames.frames);
+          scope.replay({frames: frames.frames});
+//          scope.resume()
+        });
       }
 
       return {}

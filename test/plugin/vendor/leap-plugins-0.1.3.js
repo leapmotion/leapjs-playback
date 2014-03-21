@@ -72,7 +72,6 @@ Each event also includes the hand object, which will be invalid for the handLost
           id = newValidHandIds[_i];
           if (activeHandIds.indexOf(id) === -1) {
             activeHandIds.push(id);
-            console.log('hand found');
             _results.push(this.emit('handFound', frame.hand(id)));
           } else {
             _results.push(void 0);
