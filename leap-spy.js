@@ -207,6 +207,7 @@
   // - onlyWhenDisconnected: [boolean true] Whether to turn on and off playback based off of connection state
   // - overlay: [boolean or DOM element] Whether or not to show the overlay: "Connect your Leap Motion Controller"
   //            if a DOM element is passed, that will be shown/hidden instead of the default message.
+  // - pauseOnHand: [boolean true] Whether to stop playback when a hand is in field of view
   Leap.plugin('playback', function (scope) {
 
       var loadAjaxJSON = function ( callback, url) {
@@ -235,6 +236,9 @@
       var onlyWhenDisconnected = scope.onlyWhenDisconnected;
       if (onlyWhenDisconnected === undefined) onlyWhenDisconnected = true;
 
+      var pauseOnHand = scope.pauseOnHand;
+      if (pauseOnHand === undefined) pauseOnHand = true;
+
       var overlay = scope.overlay;
       if (overlay === undefined){
         overlay =  document.createElement('div');
@@ -259,7 +263,13 @@
       // prevent the normal controller response while playing
       this.connection.removeAllListeners('frame');
       this.connection.on('frame', function(frame) {
-        if (scope.state == 'playing') return;
+        if (scope.state == 'playing') {
+          if (scope.pauseOnHand && frame.hands.length > 0){
+            scope.pause();
+          }else{
+            return
+          }
+        }
         controller.processFrame(frame);
       });
 
@@ -268,6 +278,7 @@
           // this is the controller
           scope = new Spy(this);
           scope.overlay = overlay;
+          scope.pauseOnHand = pauseOnHand;
 
           var replay = function(responseFrames){
             frames = responseFrames.frames;
@@ -284,9 +295,11 @@
       }
 
       if (onlyWhenDisconnected){
-        this.on('streamingStarted', function(){
-          scope.pause();
-        });
+        if (!pauseOnHand){
+          this.on('streamingStarted', function(){
+            scope.pause();
+          });
+        }
         this.on('streamingStopped', function(){
           scope.replay({frames: frames});
         });
