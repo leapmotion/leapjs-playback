@@ -40,7 +40,6 @@
 
         this._frame_data_index = 0;
         this.controller = controller;
-        this._spy();
     }
 
     Spy.prototype = {
@@ -50,25 +49,9 @@
          */
         MAX_ACCEPTABLE_REPORTED_DELTA: 500,
 
-        _spy: function () {
-            // removing all listeners to ensure that the spy's listener runs first
-            this._originalDataHandler = this.controller.connection.handleData;
-            this.controller.connection.handleData = this._handleData.bind(this);
-
-            this.controller.on('frame', function () {
-                if (!this._playback) {
-                    console.log('recording');
-                    if (this._frame_data.length) {
-                        this._frame_data[this._frame_data.length - 1][2] = true; // recording that the last frame
-                        // received from the web server was actually played in the animation frame;
-                    }
-                }
-            }.bind(this));
-        },
-
         stop: function () {
             this.controller.connection.handleData = this._originalDataHandler;
-            this._playback = false;
+            this.state = 'idle';
         },
 
         on: function (event, handler) {
@@ -110,7 +93,7 @@
 
         _advance: function () {
             this._frame_data_index += 1;
-            if (!(this._frame_data_index % this.maxFrames) && !this._playback) {
+            if (!(this._frame_data_index % this.maxFrames) && this.state == 'recording') {
                 this.emit('maxFrames');
             }
         },
@@ -134,53 +117,26 @@
             };
         },
 
-        _playback: false,
-
-        _play: function () {
-            if (!this._playback || this.paused){
+        sendFrame: function () {
+            if (this.state == 'idle'){
                 return;
             }
+            this.state = 'playing';
 
             var data = this._current_frame();
             var frame_info = data[0];
 
             var frame = new Leap.Frame(frame_info);
 
-            // send a device frame to the controller:
+            // send a deviceFrame to the controller:
+            // this happens before
             this.controller.processFrame(frame);
-            this._playback.current_frame = this._index();
+            this.options.currentFrameIndex = this._index();
             this._advance();
         },
 
-        // this allows
-        _handleData: function (data) {
-
-            if (this._playback) {
-                /**
-                 * We are not recording data or responding to data
-                 * when playing back data
-                 */
-            } else {
-                this._current_frame(data);
-                this._advance();
-                this._originalDataHandler.call(this.controller.connection, data);
-            }
-
-        },
-
-        paused: false, // set to true to interrupt playback without returning control to Leap Controller
-
         pause: function() {
-            this.paused = true;
-        },
-
-        resume: function() {
-          if (this._playback){
-              this.paused = false;
-              this._play();
-          } else {
-              throw new Error('must call replay before resuming');
-          }
+            this.state = 'idle';
         },
 
         /* Plays back the provided frame data
@@ -188,39 +144,38 @@
          *  - frames: previously recorded frame json
           * - loop: whether or not to loop playback.  Defaults to true.
          */
-        replay: function (params) {
-            if (params === undefined) {
-                params = true;
+        replay: function (options) {
+            if (options === undefined) {
+                options = true;
             }
 
-            if (params === true || params === false) {
-                params = {loop: params};
+            if (options === true || options === false) {
+                options = {loop: options};
             }
 
-            if (params.loop === undefined) {
-                params.loop = true;
+            if (options.loop === undefined) {
+                options.loop = true;
             }
 
-            if (params && typeof params == 'object') {
-                if (params.frames) {
-                    this._frame_data = params.frames;
+            if (options && typeof options == 'object') {
+                if (options.frames) {
+                    this._frame_data = options.frames;
                     this._frame_data_index = 0;
-                    this.maxFrames = params.frames.length;
+                    this.maxFrames = options.frames.length;
                 }
             }
 
-            this._playback = params;
+            this.options = options;
+            this.state = 'playing';
             var spy = this;
 
             function _replay() {
-                if (!spy._playback || spy._playback.done) {
-                    return;
-                }
+                if (spy.state != 'playing') return;
 
-                spy._play();
+                spy.sendFrame();
 
-                if (!spy._playback.loop && (spy._playback.current_frame > spy._index())) {
-                    spy._playback.done = true;
+                if (!spy.options.loop && (spy.options.currentFrameIndex > spy._index())) {
+                    spy.state = 'idle';
                 } else {
                     requestAnimationFrame(_replay);
                 }
@@ -264,17 +219,25 @@
       var controller = this;
       var onlyWhenDisconnected = scope.onlyWhenDisconnected;
 
+      // prevent the normal controller response while playing
+      this.connection.removeAllListeners('frame');
+      this.connection.on('frame', function(frame) {
+        if (this.state == 'playing') return;
+        controller.processFrame(frame);
+      });
+
       if (frames) {
-          // By doing this, we allow scope.pause() and scope.resume()
+          // By doing this, we allow spy methods to be accessible on the scope
           // this is the controller
           scope = new Spy(this);
-    
-          var replay = function(frames){
+
+          var replay = function(responseFrames){
+            frames = responseFrames.frames;
             if (onlyWhenDisconnected && controller.streamingCount == 0){
-//              scope.replay({frames: frames.frames});
+              scope.replay({frames: frames});
             }
           }
-    
+
           if (typeof frames == 'string') {
             loadAjaxJSON(replay, frames);
           } else {
@@ -284,17 +247,24 @@
 
       if (onlyWhenDisconnected){
         this.on('streamingStarted', function(){
-           console.log('ready');
-           scope.stop()
+           scope.pause()
         });
         this.on('streamingStopped', function(){
-          console.log('disconnected', frames.frames);
-          scope.replay({frames: frames.frames});
-//          scope.resume()
+          if (!frames) debugger;
+          scope.replay({frames: frames});
         });
       }
 
-      return {}
+      return {
+        frame: function(frame){
+          if (scope.state == 'recording') {
+            if (scope._frame_data.length) {
+              scope._frame_data[this._frame_data.length - 1][2] = true; // recording that the last frame
+              // received from the web server was actually played in the animation frame;
+            }
+          }
+        }
+      }
     }
   );
 
