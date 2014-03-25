@@ -20,14 +20,10 @@
 </head>
 <body>
 
-<p>
-  Unplug your Leap Device to autoplay.
-  <br/>Plug in to control manually.
-</p>
 
 <script>
   (window.controller = new Leap.Controller)
-      .use('playback', {frames: 'brian.json', onlyWhenDisconnected: true})
+      .use('playback', {frames: 'brian.json'})
       .use('handHold')
       .use('handEntry')
       .use('riggedHand')
