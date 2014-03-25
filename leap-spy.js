@@ -118,11 +118,6 @@
         },
 
         sendFrame: function () {
-            if (this.state == 'idle'){
-                return;
-            }
-            this.state = 'playing';
-
             var data = this._current_frame();
             var frame_info = data[0];
 
@@ -146,6 +141,8 @@
           * - loop: whether or not to loop playback.  Defaults to true.
          */
         replay: function (options) {
+            if (this.state == 'playing') return;
+            this.state = 'playing';
             if (options === undefined) {
                 options = true;
             }
@@ -262,7 +259,7 @@
       // prevent the normal controller response while playing
       this.connection.removeAllListeners('frame');
       this.connection.on('frame', function(frame) {
-        if (this.state == 'playing') return;
+        if (scope.state == 'playing') return;
         controller.processFrame(frame);
       });
 
