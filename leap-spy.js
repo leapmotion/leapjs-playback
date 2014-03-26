@@ -1,40 +1,31 @@
 (function (root) {
-
-    // stubbing underscore's toString methods -- plus some
-    if (typeof _ == 'undefined'){
-        var _ = {};
-        var fields = ['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp'];
-        for (var f = 0; f < fields.length; ++ f){
-            var __name = fields[f]
-            _['is' + name] = function(obj) {
-                return toString.call(obj) == '[object ' + name + ']';
-            };
-        };
-    }
-
     /**
      * Spy is a recorder of frames. Note that it constantly overwrites
      * itself when the frames exceed the maxFrames.
      *
-     * @param params {Object|number} an optional value to set the number of frames trapped or a hash of options
+     * @param options {Object|number} an optional value to set the number of frames trapped or a hash of options
      *  - maxFrames {number}
      *  - onMaxFrames {function} a callback for when the frame limit is hit
      *  
      * 
      * @constructor
      */
-    function Spy(controller, params) {
+    function Spy(controller, options) {
         this._frame_data = [];
         this.maxFrames = 10000;
-        if (params) {
-            if (!isNaN(params)) {
-                this.maxFrames = params;
-            } else if (params.maxFrames) {
-                this.maxFrames = params.maxFrames;
+        if (options) {
+            if (!isNaN(options)) {
+                this.maxFrames = options;
+            } else if (options.maxFrames) {
+                this.maxFrames = options.maxFrames;
             }
 
-            if (params.onMaxFrames) {
-                this.on('maxFrames', params.onMaxFrames.bind(this));
+            if (options.onMaxFrames) {
+                this.on('maxFrames', options.onMaxFrames.bind(this));
+            }
+
+            if (options.frames){
+              this.loadFrameData(options.frames, options.onReady)
             }
         }
 
@@ -51,24 +42,6 @@
 
         stop: function () {
             this.state = 'idle';
-        },
-
-        on: function (event, handler) {
-            if (!this._events) {
-                this._events = {};
-            }
-            if (!this._events[event]) {
-                this._events[event] = [];
-            }
-            this._events[event].push(handler);
-        },
-
-        emit: function (message, value) {
-            if (this._events && this._events[message]) {
-                for (var i = 0; i < this._events[message].length; ++i) {
-                    this._events[message][i](value);
-                }
-            }
         },
 
         add: function (frame) {
@@ -134,12 +107,20 @@
             this.hideOverlay();
         },
 
+        setFrames: function(frameData){
+          if (frameData.frames) {
+              this._frame_data = frameData.frames;
+              this._frame_data_index = 0;
+              this.maxFrames = frameData.frames.length;
+          }
+        },
+
         /* Plays back the provided frame data
          * Params {object|boolean}:
          *  - frames: previously recorded frame json
           * - loop: whether or not to loop playback.  Defaults to true.
          */
-        replay: function (options) {
+        playback: function (options) {
             if (this.state == 'playing') return;
             this.state = 'playing';
             if (options === undefined) {
@@ -154,20 +135,26 @@
                 options.loop = true;
             }
 
-            if (options && typeof options == 'object') {
-                if (options.frames) {
-                    this._frame_data = options.frames;
-                    this._frame_data_index = 0;
-                    this.maxFrames = options.frames.length;
-                }
-            }
-
             this.options = options;
             this.state = 'playing';
             this.showOverlay();
             var spy = this;
 
-            function _replay() {
+            // prevent the normal controller response while playing
+            this.controller.connection.removeAllListeners('frame');
+            this.controller.connection.on('frame', function(frame) {
+              if (spy.state == 'playing') {
+                if (spy.pauseOnHand && frame.hands.length > 0){
+                  spy.pause();
+                }else{
+                  return
+                }
+              }
+              console.log('c', controller);
+              controller.processFrame(frame);
+            });
+
+            function _playback() {
                 if (spy.state != 'playing') return;
 
                 spy.sendFrame();
@@ -175,11 +162,42 @@
                 if (!spy.options.loop && (spy.options.currentFrameIndex > spy._index())) {
                     spy.state = 'idle';
                 } else {
-                    requestAnimationFrame(_replay);
+                    requestAnimationFrame(_playback);
                 }
             };
 
-            requestAnimationFrame(_replay);
+            requestAnimationFrame(_playback);
+        },
+
+        // optional callback once frames are loaded, will have a context of spy
+        loadFrameData: function(framesOrURL, callback){
+          if (typeof framesOrURL !== 'string') {
+            if (callback){
+              callback.call(this, framesOrURL)
+            }
+          } else {
+            var xhr = new XMLHttpRequest(),
+                spy = this;
+
+            xhr.onreadystatechange = function () {
+              if (xhr.readyState === xhr.DONE) {
+                if (xhr.status === 200 || xhr.status === 0) {
+                  if (xhr.responseText) {
+                    spy.setFrames(JSON.parse(xhr.responseText));
+                    if (callback){
+                      callback.call(spy);
+                    }
+                  } else {
+                    console.error('Leap Playback: "' + url + '" seems to be unreachable or the file is empty.');
+                  }
+                } else {
+                  console.error('Leap Playback: Couldn\'t load "' + url + '" (' + xhr.status + ')');
+                }
+              }
+            };
+            xhr.open("GET", framesOrURL, true);
+            xhr.send(null);
+          }
         },
 
         showOverlay: function(){
@@ -208,28 +226,6 @@
   //            if a DOM element is passed, that will be shown/hidden instead of the default message.
   // - pauseOnHand: [boolean true] Whether to stop playback when a hand is in field of view
   Leap.plugin('playback', function (scope) {
-
-      var loadAjaxJSON = function ( callback, url) {
-        var xhr = new XMLHttpRequest();
-
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === xhr.DONE) {
-            if (xhr.status === 200 || xhr.status === 0) {
-              if (xhr.responseText) {
-                callback(JSON.parse(xhr.responseText));
-              } else {
-                console.error('Leap Playback: "' + url + '" seems to be unreachable or the file is empty.');
-              }
-            } else {
-              console.error('Leap Playback: Couldn\'t load "' + url + '" (' + xhr.status + ')');
-            }
-          }
-        };
-
-        xhr.open("GET", url, true);
-        xhr.send(null);
-      };
-
       var frames = scope.frames;
       var controller = this;
       var onlyWhenDisconnected = scope.onlyWhenDisconnected;
@@ -237,6 +233,23 @@
 
       var pauseOnHand = scope.pauseOnHand;
       if (pauseOnHand === undefined) pauseOnHand = true;
+
+      // todo - such a method would allow nifty angular directives `data-playback="handWave.json"`
+      // options:
+      // - frames
+      // - element
+      // - offset
+      scope.addScrollSection = function(options){
+        // one Spy per section - persists its own frame data
+        new Spy(this)
+      }
+
+      if (scope.scrollSections){
+        for (var i = 0; i < scope.scrollSections.length; i++){
+          scope.addScrollSection(scope.scrollSections[i]);
+        }
+      }
+
 
       var overlay = scope.overlay;
       if (overlay === undefined){
@@ -259,50 +272,33 @@
       }
 
 
-      // prevent the normal controller response while playing
-      this.connection.removeAllListeners('frame');
-      this.connection.on('frame', function(frame) {
-        if (scope.state == 'playing') {
-          if (scope.pauseOnHand && frame.hands.length > 0){
-            scope.pause();
-          }else{
-            return
-          }
-        }
-        controller.processFrame(frame);
-      });
-
       if (frames) {
-          // By doing this, we allow spy methods to be accessible on the scope
-          // this is the controller
-          scope = new Spy(this);
-          scope.overlay = overlay;
-          scope.pauseOnHand = pauseOnHand;
-
-          var replay = function(responseFrames){
-            frames = responseFrames.frames;
-            if (onlyWhenDisconnected && controller.streamingCount == 0){
-              scope.replay({frames: frames});
+        // By doing this, we allow spy methods to be accessible on the scope
+        // this is the controller
+        scope = new Spy(this, {
+          frames: frames,
+          onReady: function () {
+            if (onlyWhenDisconnected && controller.streamingCount == 0) {
+              this.playback();
             }
           }
+        });
 
-          if (typeof frames == 'string') {
-            loadAjaxJSON(replay, frames);
-          } else {
-            replay(frames)
+        scope.overlay = overlay;
+        scope.pauseOnHand = pauseOnHand;
+
+        if (onlyWhenDisconnected){
+          if (!pauseOnHand){
+            this.on('streamingStarted', function(){
+              scope.pause();
+            });
           }
-      }
-
-      if (onlyWhenDisconnected){
-        if (!pauseOnHand){
-          this.on('streamingStarted', function(){
-            scope.pause();
+          this.on('streamingStopped', function(){
+            scope.playback();
           });
         }
-        this.on('streamingStopped', function(){
-          scope.replay({frames: frames});
-        });
       }
+
 
       return {
         frame: function(frame){

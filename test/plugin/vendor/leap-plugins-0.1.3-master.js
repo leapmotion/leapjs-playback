@@ -1,22 +1,22 @@
-/*    
- * LeapJS-Plugins  - v0.1.3 - 2014-03-25    
- * http://github.com/leapmotion/leapjs-plugins/    
- *    
- * Copyright 2014 LeapMotion, Inc    
- *    
- * Licensed under the Apache License, Version 2.0 (the "License");    
- * you may not use this file except in compliance with the License.    
- * You may obtain a copy of the License at    
- *    
- *     http://www.apache.org/licenses/LICENSE-2.0    
- *    
- * Unless required by applicable law or agreed to in writing, software    
- * distributed under the License is distributed on an "AS IS" BASIS,    
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.    
- * See the License for the specific language governing permissions and    
- * limitations under the License.    
- *    
- */    
+/*
+ * LeapJS-Plugins  - v0.1.3 - 2014-03-26
+ * http://github.com/leapmotion/leapjs-plugins/
+ *
+ * Copyright 2014 LeapMotion, Inc
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
 //CoffeeScript generated from main/hand-entry/leap.hand-entry.coffee
 /*
@@ -33,14 +33,14 @@ Each event also includes the hand object, which will be invalid for the handLost
     var activeHandIds;
     activeHandIds = [];
     this.on("deviceDisconnected", function() {
-      var i, id, _i, _len, _results;
-      _results = [];
-      for (i = _i = 0, _len = activeHandIds.length; _i < _len; i = ++_i) {
-        id = activeHandIds[i];
-        activeHandIds.splice(i, 1);
-        _results.push(this.emit('handLost', this.lastConnectionFrame.hand(id)));
-      }
-      return _results;
+      for (var i = 0, len = activeHandIds.length; i < len; i++){
+      id = activeHandIds[i];
+      activeHandIds.splice(i, 1);
+      // this gets executed before the current frame is added to the history.
+      this.emit('handLost', this.lastConnectionFrame.hand(id))
+      i--;
+      len--;
+    };
     });
     return {
       frame: function(frame) {
