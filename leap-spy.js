@@ -50,7 +50,6 @@
         MAX_ACCEPTABLE_REPORTED_DELTA: 500,
 
         stop: function () {
-            this.controller.connection.handleData = this._originalDataHandler;
             this.state = 'idle';
         },
 
