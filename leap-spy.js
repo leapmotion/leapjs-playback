@@ -25,7 +25,7 @@
             }
 
             if (options.frames){
-              this.loadFrameData(options.frames, options.onReady)
+                this.loadFrameData(options.frames, options.onReady)
             }
         }
 
@@ -98,7 +98,7 @@
             // send a deviceFrame to the controller:
             // this happens before
             this.controller.processFrame(frame);
-            this.options.currentFrameIndex = this._index();
+            this.currentFrameIndex = this._index();
             this._advance();
         },
 
@@ -108,11 +108,20 @@
         },
 
         setFrames: function(frameData){
+          console.log('set frames', frameData);
           if (frameData.frames) {
               this._frame_data = frameData.frames;
               this._frame_data_index = 0;
               this.maxFrames = frameData.frames.length;
           }
+        },
+
+        // completion [Number, 0..1]
+        // sets the current frame based upon fractional completion, where 0 is the first frame and 1 is the last
+        setPosition: function(completion){
+          if (this._frame_data.length === 0) return;
+          this._frame_data_index = Math.round(completion * this.maxFrames);
+          this.sendFrame();
         },
 
         /* Plays back the provided frame data
@@ -159,7 +168,7 @@
 
                 spy.sendFrame();
 
-                if (!spy.options.loop && (spy.options.currentFrameIndex > spy._index())) {
+                if (!spy.options.loop && (spy.currentFrameIndex > spy._index())) {
                     spy.state = 'idle';
                 } else {
                     requestAnimationFrame(_playback);
@@ -226,6 +235,7 @@
   //            if a DOM element is passed, that will be shown/hidden instead of the default message.
   // - pauseOnHand: [boolean true] Whether to stop playback when a hand is in field of view
   Leap.plugin('playback', function (scope) {
+
       var frames = scope.frames;
       var controller = this;
       var onlyWhenDisconnected = scope.onlyWhenDisconnected;
@@ -241,7 +251,15 @@
       // - offset
       scope.addScrollSection = function(options){
         // one Spy per section - persists its own frame data
-        new Spy(this)
+        var spy = new Spy(controller, {
+          frames: options.frames
+        });
+        window.onscroll = function(){
+          var completion = (window.innerHeight + document.body.scrollTop - options.element.offsetTop) / options.element.offsetHeight;
+          if (completion > 1 ||completion < 0) return;
+
+          spy.setPosition(completion);
+        }
       }
 
       if (scope.scrollSections){

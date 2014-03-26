@@ -8,6 +8,7 @@
   <style>
     body{
       font-family: Helvetica;
+      line-height: 2em;
     }
     section{
       width: 400px;
@@ -43,6 +44,24 @@
   </p>
 </section>
 
+<section data-playback="brian.json" style="background: #ccc;">
+  <p>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi mattis, libero ut congue congue, tortor neque egestas nunc, in malesuada erat nibh ut nulla. Quisque vel luctus mauris. Curabitur sodales urna scelerisque nulla volutpat pharetra. Phasellus pulvinar sem non lacus rhoncus, ut vestibulum lacus pharetra. Phasellus ornare velit in felis rutrum tincidunt. Aliquam fermentum ultricies sapien eu congue. Donec tincidunt sapien sit amet dui condimentum suscipit. Mauris et facilisis leo. Aenean lobortis felis ut condimentum fermentum. Pellentesque eleifend metus justo, vitae pretium ligula dapibus sit amet. Aenean et turpis diam. Nullam congue turpis ac ipsum egestas, at iaculis quam rhoncus. Nulla sed malesuada nulla. Mauris placerat posuere massa, non dictum odio adipiscing eu.
+  </p>
+
+  <p>
+    Aliquam erat volutpat. Aliquam sit amet ultrices elit, et venenatis lacus. Nulla vitae facilisis ligula. Integer ac tempus nulla, ut eleifend nisl. Curabitur dignissim enim risus, in euismod nisi ultrices et. Donec vitae libero vitae ante ornare faucibus. Aliquam sem nisi, accumsan at ipsum nec, ornare rhoncus arcu. Vivamus libero augue, tristique eu lacus sit amet, posuere malesuada tellus. Praesent faucibus ultrices lacinia. Nam leo nisl, dapibus a feugiat sit amet, aliquet fringilla nunc. Nulla vel quam ac ipsum ultricies congue. Vivamus fringilla ipsum nibh, sed accumsan urna condimentum at.
+  </p>
+
+  <p>
+    Suspendisse commodo fringilla mauris sit amet tristique. Morbi quis euismod diam, a vestibulum erat. Curabitur sagittis ante ut dictum scelerisque. Vivamus lobortis ut enim id tristique. Vivamus convallis nisi ac dapibus posuere. Donec adipiscing diam mauris, nec interdum turpis mattis quis. Curabitur eu pulvinar risus. Aliquam pellentesque orci id elit ultrices, vitae lobortis massa blandit. Duis consequat mattis nisl, sit amet faucibus diam porta nec.
+  </p>
+
+  <p>
+    Phasellus commodo blandit ligula nec dignissim. Maecenas mi mauris, convallis at mi ut, ornare volutpat nulla. In sed elit suscipit, convallis augue a, ultricies massa. Vivamus at placerat dui, sagittis cursus libero. Cras non luctus mauris, vitae imperdiet massa. Vivamus mattis, justo vitae pharetra eleifend, nibh nulla lobortis sem, id ultricies lorem augue sollicitudin erat. Vestibulum tortor mi, varius a nisi non, sagittis imperdiet nulla. Nulla sed cursus eros. Morbi ut risus ipsum. Nunc a quam nec odio semper bibendum vel vel dui. Nullam rhoncus tincidunt diam, eget vehicula sapien tincidunt sodales. Proin nec ullamcorper justo. Aliquam eu tortor ac purus rhoncus aliquam.
+  </p>
+</section>
+
 
 
 
@@ -51,7 +70,7 @@
     .use('playback', {
       scrollSections: [{
         frames: 'brian.json',
-        element: document.getElementsByTagName('section')[0],
+        element: document.getElementsByTagName('section')[1],
         offset: 0
       }]})
     .use('handHold')
