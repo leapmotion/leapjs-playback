@@ -194,12 +194,13 @@
             return
           }
         }
-        console.log('c', controller);
+        if (spy.state == 'idle' && frame.hands.length == 0 && spy.scrollSections) {
+          spy.play();
+        }
         spy.controller.processFrame(frame);
       });
 
       function _play() {
-        console.log('o', spy.state);
         if (spy.state != 'playing') return;
         spy.sendCurrentSectionFrame() || (spy.sendFrame(spy._current_frame()) && spy._advance());
 
@@ -309,22 +310,20 @@
         }
       });
 
-      if (scope.recording) {
-        // By doing this, we allow spy methods to be accessible on the scope
-        // this is the controller
-        scope.overlay = overlay;
-        scope.pauseOnHand = pauseOnHand;
+      // By doing this, we allow spy methods to be accessible on the scope
+      // this is the controller
+      scope.overlay = overlay;
+      scope.pauseOnHand = pauseOnHand;
 
-        if (onlyWhenDisconnected) {
-          if (!pauseOnHand) {
-            this.on('streamingStarted', function () {
-              scope.pause();
-            });
-          }
-          this.on('streamingStopped', function () {
-            scope.play();
+      if (onlyWhenDisconnected) {
+        if (!pauseOnHand) {
+          this.on('streamingStarted', function () {
+            scope.pause();
           });
         }
+        this.on('streamingStopped', function () {
+          scope.play();
+        });
       }
 
 
