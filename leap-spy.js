@@ -33,7 +33,7 @@
         this.loadFrameData(options, function(){
           // initializes _frame_data_index and stuff
           this.setFrames(options.recording);
-          options.onReady();
+          options.onReady.call(this);
         })
       }
 
@@ -145,14 +145,13 @@
     // returns false unless sections are defined
     // returns true and sends a frame for the first possible section  
     sendCurrentSectionFrame: function () {
-      if (!this.scrollSections.length) return false;
+      if (!this.scrollSections) return false;
       var section;
 
       for (var i = 0; i < this.scrollSections.length; i++) {
         section = this.scrollSections[i];
         section.completion = (window.innerHeight + document.body.scrollTop - section.element.offsetTop) / section.element.offsetHeight;
         if (section.completion > 0 && section.completion < 1) {
-//          debugger
           this.setPosition(section);
           return true
         }
@@ -272,6 +271,8 @@
   // - overlay: [boolean or DOM element] Whether or not to show the overlay: "Connect your Leap Motion Controller"
   //            if a DOM element is passed, that will be shown/hidden instead of the default message.
   // - pauseOnHand: [boolean true] Whether to stop playback when a hand is in field of view
+  // - requiredProtocolVersion: clients connected with a lower protocol number will not be able to take control of the
+  // controller with their device.  This option, if set, ovverrides onlyWhenDisconnected
   Leap.plugin('playback', function (scope) {
 
       var controller = this;
@@ -280,6 +281,8 @@
 
       var pauseOnHand = scope.pauseOnHand;
       if (pauseOnHand === undefined) pauseOnHand = true;
+
+      var requiredProtocolVersion = scope.requiredProtocolVersion;
 
       var overlay = scope.overlay;
       if (overlay === undefined) {
@@ -315,16 +318,46 @@
       // this is the controller
       scope.overlay = overlay;
       scope.pauseOnHand = pauseOnHand;
+      scope.requiredProtocolVersion = requiredProtocolVersion;
 
-      if (onlyWhenDisconnected) {
-        if (!pauseOnHand) {
-          this.on('streamingStarted', function () {
-            scope.pause();
+
+      var setupStreamingEvents = function(){
+        if (controller.connection.opts.requestProtocolVersion < scope.requiredProtocolVersion){
+          console.log('Protocol Version too old (' + controller.connection.opts.requestProtocolVersion + '), disabling device interaction.');
+          scope.pauseOnHand = false;
+          return
+        }
+
+        // shim streamingStarted/streamingStopped for legacy tracking
+        if (this.connection.opts.requestProtocolVersion < 5){
+          // this means we need to shim streamingStarted/streamingStopped
+          controller.on('deviceConnected', function(){
+            controller.emit('streamingStarted');
+          });
+          controller.on('deviceDisconnected', function(){
+            controller.emit('streamingStopped');
           });
         }
-        this.on('streamingStopped', function () {
-          scope.play();
-        });
+
+        if (onlyWhenDisconnected) {
+          if (!pauseOnHand) {
+            controller.on('streamingStarted', function () {
+              console.log('pause');
+              scope.pause();
+            });
+          }
+          controller.on('streamingStopped', function () {
+            console.log('play');
+            scope.play();
+          });
+        }
+      }
+
+      // ready happens before streaming started, allowing us to check the version before responding to streamingStart/Stop
+      if (this.connected()){ // todo: bring in to legacy js
+        setupStreamingEvents()
+      }else{
+        this.on('ready', setupStreamingEvents)
       }
 
 
