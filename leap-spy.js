@@ -112,6 +112,7 @@
       // this happens before
       this.controller.processFrame(frame);
       this.currentFrameIndex = this._index();
+      return true
     },
 
     pause: function () {
