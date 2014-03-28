@@ -194,7 +194,7 @@
             return
           }
         }
-        if (spy.state == 'idle' && frame.hands.length == 0 && spy.scrollSections) {
+        if (spy.state == 'idle' && frame.hands.length == 0) {
           spy.play();
         }
         spy.controller.processFrame(frame);
@@ -304,11 +304,11 @@
           'Connect your <a href="http://www.leapmotion.com">Leap Motion Controller</a></p>';
       }
 
-      scope = new Spy(this, {
+      scope.spy = new Spy(this, {
         recording: scope.recording,
         scrollSections: scope.scrollSections,
         onReady: function () {
-          if (onlyWhenDisconnected && controller.streamingCount == 0) {
+          if (onlyWhenDisconnected && (controller.streamingCount == 0 || pauseOnHand)) {
             this.play();
           }
         }
@@ -316,39 +316,25 @@
 
       // By doing this, we allow spy methods to be accessible on the scope
       // this is the controller
-      scope.overlay = overlay;
-      scope.pauseOnHand = pauseOnHand;
-      scope.requiredProtocolVersion = requiredProtocolVersion;
+      scope.spy.overlay = overlay;
+      scope.spy.pauseOnHand = pauseOnHand;
+      scope.spy.requiredProtocolVersion = requiredProtocolVersion;
 
 
       var setupStreamingEvents = function(){
         if (controller.connection.opts.requestProtocolVersion < scope.requiredProtocolVersion){
           console.log('Protocol Version too old (' + controller.connection.opts.requestProtocolVersion + '), disabling device interaction.');
-          scope.pauseOnHand = false;
+          scope.spy.pauseOnHand = false;
           return
         }
 
-        // shim streamingStarted/streamingStopped for legacy tracking
-        if (this.connection.opts.requestProtocolVersion < 5){
-          // this means we need to shim streamingStarted/streamingStopped
-          controller.on('deviceConnected', function(){
-            controller.emit('streamingStarted');
-          });
-          controller.on('deviceDisconnected', function(){
-            controller.emit('streamingStopped');
-          });
-        }
-
         if (onlyWhenDisconnected) {
-          if (!pauseOnHand) {
-            controller.on('streamingStarted', function () {
-              console.log('pause');
-              scope.pause();
-            });
-          }
-          controller.on('streamingStopped', function () {
-            console.log('play');
-            scope.play();
+          controller.on('deviceConnected', function () {
+            scope.spy.pause();
+          });
+
+          controller.on('deviceDisconnected', function () {
+            scope.spy.play();
           });
         }
       }
