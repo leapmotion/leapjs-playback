@@ -214,6 +214,15 @@
       requestAnimationFrame(_play);
     },
 
+    // switches to record mode, which will be begin capturing data when a hand enters the frame,
+    // and stop when a hand leaves
+    // Todo: replace _frame_data with a full fledged recording, including metadata.
+    record: function(){
+      this.stop();
+      this.state = 'recording';
+      this._frame_data = [];
+    },
+
     // optional callback once frames are loaded, will have a context of spy
     // replaces the contents of recordingOrURL in-place when the AJAX has completed.
     loadFrameData: function (options, callback) {
@@ -349,10 +358,12 @@
 
       return {
         frame: function (frame) {
-          if (scope.state == 'recording') {
-            if (scope._frame_data.length) {
-              scope._frame_data[this._frame_data.length - 1][2] = true; // recording that the last frame
-              // received from the web server was actually played in the animation frame;
+          if (scope.spy.state == 'recording') {
+            if (scope.spy.hands.length > 1){
+              scope.spy._frame_data.push(frame)
+            } else if ( scope._frame_data.length > 0){
+              scope.spy.stop()
+              this.emit('playback.recordingFinished', scope.spy)
             }
           }
         }

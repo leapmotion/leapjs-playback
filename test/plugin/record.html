@@ -1,0 +1,71 @@
+<html>
+<head>
+  <title>LeapJS Playback Recorder</title>
+  <link href="stylesheets/bootstrap.css" rel="stylesheet">
+  <script src="javascripts/bootstrap.js"></script>
+  <script src="javascripts/three.min.js"></script>
+  <script src="javascripts/leap-skeleton-deviceEvents.js"></script>
+  <script src="javascripts/leap-plugins-0.1.3-master.js"></script>
+  <script src="javascripts/leap.rigged-hand.js"></script>
+  <script src="../../leap-spy.js"></script>
+  <style>
+    body{
+      font-family: Helvetica;
+    }
+    canvas {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+    }
+    #controls{
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      z-index: 20;
+    }
+  </style>
+  <script type="text/javascript">
+
+
+
+  </script>
+</head>
+<body>
+
+<div id="controls">
+  <!--<a href="#">Save As</a>-->
+  <div class="btn-group btn-group-lg" data-toggle="buttons">
+    <button type="button" class="btn btn-default" id="record">Record</button>
+    <button type="button" class="btn btn-default">Crop</button>
+    <button type="button" class="btn btn-default">Playback</button>
+  </div>
+</div>
+
+
+<script>
+  (window.controller = new Leap.Controller)
+    .use('playback')
+    .use('handHold')
+    .use('handEntry')
+    .use('riggedHand')
+    .connect();
+
+  var recordControl = document.getElementById('record'),
+      cropControl = document.getElementById('crop'),
+      playbackControl = document.getElementById('playback');
+
+  recordControl.onclick = function(){
+    window.controller.plugins.playback.record();
+  }
+
+  window.controller.on('playback.recordingFinished', function(){
+    cropControl.trigger('click');
+  });
+</script>
+
+</body>
+</html>
