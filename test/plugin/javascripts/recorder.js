@@ -86,7 +86,18 @@
       };
       $document.bind('keypress', function(e) {
         if (e.which === 32) {
-          return $scope.playback();
+          $scope.playback();
+        }
+        if (e.which === 102) {
+          if (document.body.requestFullscreen) {
+            return document.body.requestFullscreen();
+          } else if (document.body.msRequestFullscreen) {
+            return document.body.msRequestFullscreen();
+          } else if (document.body.mozRequestFullScreen) {
+            return document.body.mozRequestFullScreen();
+          } else if (document.body.webkitRequestFullscreen) {
+            return document.body.webkitRequestFullscreen();
+          }
         }
       });
       window.controller.on('frame', function(frame) {

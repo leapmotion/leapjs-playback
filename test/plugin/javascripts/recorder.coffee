@@ -77,6 +77,15 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
   $document.bind 'keypress', (e)->
     if e.which == 32
       $scope.playback()
+    if e.which == 102
+      if (document.body.requestFullscreen)
+        document.body.requestFullscreen()
+      else if (document.body.msRequestFullscreen)
+        document.body.msRequestFullscreen()
+      else if (document.body.mozRequestFullScreen)
+        document.body.mozRequestFullScreen()
+      else if (document.body.webkitRequestFullscreen)
+        document.body.webkitRequestFullscreen()
 
 
   window.controller.on 'frame', (frame)->
