@@ -171,6 +171,7 @@
      */
     play: function (options) {
       if (this.state == 'playing') return;
+      if (this.loading == true) return;
       this.state = 'playing';
       if (options === undefined) {
         options = true;
@@ -245,11 +246,11 @@
             if (xhr.status === 200 || xhr.status === 0) {
               if (xhr.responseText) {
                 options.recording = JSON.parse(xhr.responseText)
+                player.loading = false;
                 if (callback) {
                   callback.call(player, options.recording);
                 }
-                player.loading = false;
-                controller.emit('ajax:complete', player);
+                controller.emit('playback.ajax:complete', player);
               } else {
                 console.error('Leap Playback: "' + url + '" seems to be unreachable or the file is empty.');
               }
@@ -259,7 +260,7 @@
           }
         };
         player.loading = true;
-        controller.emit('ajax:begin', player);
+        controller.emit('playback.ajax:begin', player);
         xhr.open("GET", options.recording, true);
         xhr.send(null);
       }

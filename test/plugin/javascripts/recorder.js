@@ -13,18 +13,28 @@
       $scope.maxFrames = function() {
         return window.controller.plugins.playback.player.maxFrames - 1;
       };
-      $scope.mode = player().loading ? 'playback' : 'record';
-      $scope.min = 0;
-      $scope.max = $scope.maxFrames();
+      $scope.mode = '';
+      $scope.leftHandlePosition = 0;
+      $scope.rightHandlePosition = $scope.maxFrames();
       $scope.paused = false;
       $scope.player = player;
-      $scope.$watch('min', function(newVal, oldVal) {
+      $scope.inDigestLoop = false;
+      $scope.pinHandle = '';
+      $scope.$watch('leftHandlePosition', function(newVal, oldVal) {
+        if ($scope.mode !== 'crop') {
+          return;
+        }
         player().setFrameIndex(parseInt(newVal, 10));
         return player().leftCrop();
       });
-      $scope.$watch('max', function(newVal, oldVal) {
+      $scope.$watch('rightHandlePosition', function(newVal, oldVal) {
+        if ($scope.inDigestLoop) {
+          return;
+        }
         player().setFrameIndex(parseInt(newVal, 10));
-        return player().rightCrop();
+        if ($scope.mode === 'crop') {
+          return player().rightCrop();
+        }
       });
       $scope.record = function() {
         var hand, _i, _len, _ref;
@@ -38,31 +48,57 @@
       };
       $scope.crop = function() {
         $scope.mode = 'crop';
+        $scope.pinHandle = '';
+        setTimeout(function() {
+          $scope.inDigestLoop = true;
+          $scope.leftHandlePosition = player().leftCropPosition;
+          $scope.rightHandlePosition = player().rightCropPosition;
+          $scope.$apply();
+          return $scope.inDigestLoop = false;
+        }, 0);
         return player().pause();
       };
       $scope.pauseOnPlaybackButtonClick = function() {
         return $scope.mode === 'playback' && !$scope.paused;
       };
-      window.controller.on('ajax:begin', function(player) {
-        return $scope.mode = 'playback';
-      });
-      window.controller.on('ajax:complete', function(player) {
+      window.controller.on('playback.ajax:begin', function(player) {
+        $scope.playback();
         return $scope.$apply();
       });
-      $scope.playback = function($event) {
+      window.controller.on('playback.ajax:complete', function(player) {
+        return $scope.$apply();
+      });
+      $scope.playback = function() {
         $scope.paused = $scope.pauseOnPlaybackButtonClick();
         $scope.mode = 'playback';
+        $scope.pinHandle = 'min';
         if ($scope.paused) {
           return player().pause();
         } else {
           return player().play();
         }
       };
-      return $scope.save = function() {
+      window.controller.on('frame', function(frame) {
+        if ($scope.mode !== 'playback') {
+          return;
+        }
+        $scope.inDigestLoop = true;
+        $scope.$apply(function() {
+          $scope.leftHandlePosition = player().leftCropPosition;
+          return $scope.rightHandlePosition = player()._frame_data_index;
+        });
+        return $scope.inDigestLoop = false;
+      });
+      $scope.save = function() {
         return saveAs(new Blob([player()["export"]()], {
           type: "text/JSON;charset=utf-8"
         }), 'lz4.json');
       };
+      if (player().loading) {
+        return $scope.playback();
+      } else {
+        return $scope.record();
+      }
     }
   ]);
 
