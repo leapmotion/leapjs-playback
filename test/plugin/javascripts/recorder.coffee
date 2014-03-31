@@ -21,11 +21,13 @@ recorder.controller 'Controls', ['$scope', '$location', ($scope, $location)->
 
 
   $scope.$watch 'leftHandlePosition', (newVal, oldVal) ->
+    return if newVal == oldVal
     return unless $scope.mode == 'crop'
     player().setFrameIndex(parseInt(newVal, 10))
     player().leftCrop()
 
   $scope.$watch 'rightHandlePosition', (newVal, oldVal) ->
+    return if newVal == oldVal  # prevents issue where newVal == 9999 on bootstrap
     return if $scope.inDigestLoop
     player().setFrameIndex(parseInt(newVal, 10))
     if $scope.mode == 'crop'

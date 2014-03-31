@@ -21,6 +21,9 @@
       $scope.inDigestLoop = false;
       $scope.pinHandle = '';
       $scope.$watch('leftHandlePosition', function(newVal, oldVal) {
+        if (newVal === oldVal) {
+          return;
+        }
         if ($scope.mode !== 'crop') {
           return;
         }
@@ -28,6 +31,9 @@
         return player().leftCrop();
       });
       $scope.$watch('rightHandlePosition', function(newVal, oldVal) {
+        if (newVal === oldVal) {
+          return;
+        }
         if ($scope.inDigestLoop) {
           return;
         }
