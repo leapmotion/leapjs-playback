@@ -40,10 +40,9 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
       # move to reset method on rigged hand?
       for hand in player().controller.lastConnectionFrame.hands
         player().controller.emit('handLost', hand)
-
     $scope.mode = 'record'
 
-    if $scope.paused then player().record() else player().stop()
+    if $scope.paused then player().stop() else player().record()
 
   $scope.crop = ->
     $scope.mode = 'crop'
@@ -57,6 +56,10 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
       $scope.inDigestLoop = false
     , 0
     player().pause()
+    # this hack previews the current hand position
+    setTimeout(->
+      player().sendFrame(player()._current_frame())
+    , 0)
 
   $scope.stopOnRecordButtonClick = ->
     $scope.mode == 'record' && !$scope.paused
@@ -73,8 +76,10 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
     $scope.$apply()
 
   window.controller.on 'playback.recordingFinished', ->
+    if player().loaded()
+      $scope.crop()
+    # remove depressed button state on record button -.-
     document.getElementById('record').blur()
-    $scope.playback()
 
   $scope.playback = ()->
     $scope.paused = $scope.pauseOnPlaybackButtonClick()
@@ -84,27 +89,41 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
     if $scope.paused then player().pause() else player().play()
 
   $document.bind 'keypress', (e)->
-    if e.which == 32
-      # prevent spacebar from activating buttons
-      e.originalEvent.target.blur()
-      $scope.playback()
-    if e.which == 102
-      if (document.body.requestFullscreen)
-        document.body.requestFullscreen()
-      else if (document.body.msRequestFullscreen)
-        document.body.msRequestFullscreen()
-      else if (document.body.mozRequestFullScreen)
-        document.body.mozRequestFullScreen()
-      else if (document.body.webkitRequestFullscreen)
-        document.body.webkitRequestFullscreen()
+    switch e.which
+      when 32
+        # prevent spacebar from activating buttons
+        e.originalEvent.target.blur()
+        if $scope.mode == 'record'
+          $scope.record()
+        else
+          $scope.playback()
+      when 102
+        if (document.body.requestFullscreen)
+          document.body.requestFullscreen()
+        else if (document.body.msRequestFullscreen)
+          document.body.msRequestFullscreen()
+        else if (document.body.mozRequestFullScreen)
+          document.body.mozRequestFullScreen()
+        else if (document.body.webkitRequestFullscreen)
+          document.body.webkitRequestFullscreen()
+      when 114
+        $scope.record()
+      when 99
+        $scope.crop()
+      when 112
+        $scope.playback()
+      when 47, 63
+        console.log 'show help'
+      else
+        console.log "unbound keycode: #{e.which}"
 
 
   window.controller.on 'frame', (frame)->
-    return unless $scope.mode == 'playback'
     $scope.inDigestLoop = true
     $scope.$apply ->
-      $scope.leftHandlePosition = player().leftCropPosition
-      $scope.rightHandlePosition = player()._frame_data_index
+      if $scope.mode == 'playback'
+        $scope.leftHandlePosition = player().leftCropPosition
+        $scope.rightHandlePosition = player()._frame_data_index
     $scope.inDigestLoop = false
 
 

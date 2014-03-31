@@ -54,9 +54,9 @@
         }
         $scope.mode = 'record';
         if ($scope.paused) {
-          return player().record();
-        } else {
           return player().stop();
+        } else {
+          return player().record();
         }
       };
       $scope.crop = function() {
@@ -69,7 +69,10 @@
           $scope.$apply();
           return $scope.inDigestLoop = false;
         }, 0);
-        return player().pause();
+        player().pause();
+        return setTimeout(function() {
+          return player().sendFrame(player()._current_frame());
+        }, 0);
       };
       $scope.stopOnRecordButtonClick = function() {
         return $scope.mode === 'record' && !$scope.paused;
@@ -85,8 +88,10 @@
         return $scope.$apply();
       });
       window.controller.on('playback.recordingFinished', function() {
-        document.getElementById('record').blur();
-        return $scope.playback();
+        if (player().loaded()) {
+          $scope.crop();
+        }
+        return document.getElementById('record').blur();
       });
       $scope.playback = function() {
         $scope.paused = $scope.pauseOnPlaybackButtonClick();
@@ -99,30 +104,46 @@
         }
       };
       $document.bind('keypress', function(e) {
-        if (e.which === 32) {
-          e.originalEvent.target.blur();
-          $scope.playback();
-        }
-        if (e.which === 102) {
-          if (document.body.requestFullscreen) {
-            return document.body.requestFullscreen();
-          } else if (document.body.msRequestFullscreen) {
-            return document.body.msRequestFullscreen();
-          } else if (document.body.mozRequestFullScreen) {
-            return document.body.mozRequestFullScreen();
-          } else if (document.body.webkitRequestFullscreen) {
-            return document.body.webkitRequestFullscreen();
-          }
+        switch (e.which) {
+          case 32:
+            e.originalEvent.target.blur();
+            if ($scope.mode === 'record') {
+              return $scope.record();
+            } else {
+              return $scope.playback();
+            }
+            break;
+          case 102:
+            if (document.body.requestFullscreen) {
+              return document.body.requestFullscreen();
+            } else if (document.body.msRequestFullscreen) {
+              return document.body.msRequestFullscreen();
+            } else if (document.body.mozRequestFullScreen) {
+              return document.body.mozRequestFullScreen();
+            } else if (document.body.webkitRequestFullscreen) {
+              return document.body.webkitRequestFullscreen();
+            }
+            break;
+          case 114:
+            return $scope.record();
+          case 99:
+            return $scope.crop();
+          case 112:
+            return $scope.playback();
+          case 47:
+          case 63:
+            return console.log('show help');
+          default:
+            return console.log("unbound keycode: " + e.which);
         }
       });
       window.controller.on('frame', function(frame) {
-        if ($scope.mode !== 'playback') {
-          return;
-        }
         $scope.inDigestLoop = true;
         $scope.$apply(function() {
-          $scope.leftHandlePosition = player().leftCropPosition;
-          return $scope.rightHandlePosition = player()._frame_data_index;
+          if ($scope.mode === 'playback') {
+            $scope.leftHandlePosition = player().leftCropPosition;
+            return $scope.rightHandlePosition = player()._frame_data_index;
+          }
         });
         return $scope.inDigestLoop = false;
       });

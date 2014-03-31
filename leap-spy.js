@@ -18,6 +18,7 @@
     this.controller = controller;
     this.scrollSections = this.options.scrollSections;
     this.loading = false;
+    this.suppressDeviceFrames = false;
 
     if (options) {
       if (!isNaN(options)) {
@@ -56,6 +57,7 @@
 
     stop: function () {
       this.state = 'idle';
+      this.suppressDeviceFrames = false;
     },
 
     add: function (frame) {
@@ -85,13 +87,15 @@
       }
     },
 
+    // Adds playback = true to artificial frames
     sendFrame: function (frameData) {
       if (!frameData) throw "Frame data not provided";
       // note that currently frame json is sent as nested arrays, unnecessarily.  That should be fixed.
       var frame = new Leap.Frame(frameData);
+      frame.playback = true;
 
       // send a deviceFrame to the controller:
-      // this happens before
+      // this frame gets picked up by the controllers own animation loop.
       this.controller.processFrame(frame);
       this.currentFrameIndex = this._frame_data_index;
       return true
@@ -99,6 +103,7 @@
 
     pause: function () {
       this.state = 'idle';
+      this.suppressDeviceFrames = true;
       if (this.overlay) this.hideOverlay();
     },
 
@@ -173,6 +178,7 @@
       if (this.state == 'playing') return;
       if (this.loading == true) return;
       this.state = 'playing';
+      this.suppressDeviceFrames = true;
       if (options === undefined) {
         options = true;
       }
@@ -194,6 +200,8 @@
       // prevent the normal controller response while playing
       this.controller.connection.removeAllListeners('frame');
       this.controller.connection.on('frame', function (frame) {
+        if (player.suppressDeviceFrames) return;
+
         if (player.state == 'playing') {
           if (player.pauseOnHand && frame.hands.length > 0) {
             player.pause();
@@ -229,6 +237,15 @@
       this._frame_data = [];
       this._frame_data_index = 0;
       this.state = 'recording';
+      this.suppressDeviceFrames = false;
+    },
+
+    recordPending: function(){
+      return this.state == 'recording' && this._frame_data.length == 0
+    },
+
+    recording: function(){
+      return this.state == 'recording' && this._frame_data.length != 0
     },
 
     finishRecording: function(){
@@ -335,7 +352,7 @@
     if (onlyWhenDisconnected === undefined) onlyWhenDisconnected = true;
 
     var pauseOnHand = scope.pauseOnHand;
-    if (pauseOnHand === undefined) pauseOnHand = true;
+    if (pauseOnHand === undefined) pauseOnHand = false;
 
     var requiredProtocolVersion = scope.requiredProtocolVersion;
 
@@ -405,7 +422,7 @@
 
     return {
       frame: function (frame) {
-        if (scope.player.state == 'recording') {
+        if (scope.player.state == 'recording' && !frame.playback) {
           if (frame.hands.length > 0){
             scope.player._frame_data.push(frame)
           } else if ( scope.player._frame_data.length > 0){
