@@ -44,13 +44,20 @@
       });
       $scope.record = function() {
         var hand, _i, _len, _ref;
-        $scope.mode = 'record';
-        _ref = player().controller.lastConnectionFrame.hands;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          hand = _ref[_i];
-          player().controller.emit('handLost', hand);
+        $scope.paused = $scope.stopOnRecordButtonClick();
+        if ($scope.mode !== 'record') {
+          _ref = player().controller.lastConnectionFrame.hands;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            hand = _ref[_i];
+            player().controller.emit('handLost', hand);
+          }
         }
-        return player().record();
+        $scope.mode = 'record';
+        if ($scope.paused) {
+          return player().record();
+        } else {
+          return player().stop();
+        }
       };
       $scope.crop = function() {
         $scope.mode = 'crop';
@@ -64,6 +71,9 @@
         }, 0);
         return player().pause();
       };
+      $scope.stopOnRecordButtonClick = function() {
+        return $scope.mode === 'record' && !$scope.paused;
+      };
       $scope.pauseOnPlaybackButtonClick = function() {
         return $scope.mode === 'playback' && !$scope.paused;
       };
@@ -73,6 +83,10 @@
       });
       window.controller.on('playback.ajax:complete', function(player) {
         return $scope.$apply();
+      });
+      window.controller.on('playback.recordingFinished', function() {
+        document.getElementById('record').blur();
+        return $scope.playback();
       });
       $scope.playback = function() {
         $scope.paused = $scope.pauseOnPlaybackButtonClick();

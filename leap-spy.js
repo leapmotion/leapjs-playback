@@ -88,7 +88,7 @@
     sendFrame: function (frameData) {
       if (!frameData) throw "Frame data not provided";
       // note that currently frame json is sent as nested arrays, unnecessarily.  That should be fixed.
-      var frame = new Leap.Frame(frameData[0]);
+      var frame = new Leap.Frame(frameData);
 
       // send a deviceFrame to the controller:
       // this happens before
@@ -226,8 +226,15 @@
     // Todo: replace _frame_data with a full fledged recording, including metadata.
     record: function(){
       this.stop();
-      this.state = 'recording';
       this._frame_data = [];
+      this._frame_data_index = 0;
+      this.state = 'recording';
+    },
+
+    finishRecording: function(){
+      this.stop()
+      this.setFrames({frames: this._frame_data})
+      this.controller.emit('playback.recordingFinished', this)
     },
 
     // optional callback once frames are loaded, will have a context of player
@@ -239,18 +246,29 @@
         }
       } else {
         var xhr = new XMLHttpRequest(),
-          player = this;
+          player = this,
+          url = options.recording;
 
         xhr.onreadystatechange = function () {
           if (xhr.readyState === xhr.DONE) {
             if (xhr.status === 200 || xhr.status === 0) {
               if (xhr.responseText) {
-                options.recording = JSON.parse(xhr.responseText)
+
+                options.recording = xhr.responseText
+
+                if (url.split('.')[url.split('.').length - 1] == 'lz') {
+                  options.recording = player.decompress(options.recording);
+                }
+
+                options.recording = JSON.parse(options.recording);
+
                 player.loading = false;
+
                 if (callback) {
                   callback.call(player, options.recording);
                 }
                 controller.emit('playback.ajax:complete', player);
+
               } else {
                 console.error('Leap Playback: "' + url + '" seems to be unreachable or the file is empty.');
               }
@@ -261,7 +279,7 @@
         };
         player.loading = true;
         controller.emit('playback.ajax:begin', player);
-        xhr.open("GET", options.recording, true);
+        xhr.open("GET", url, true);
         xhr.send(null);
       }
     },
@@ -274,12 +292,30 @@
       this.overlay.style.display = 'none';
     },
 
+    croppedFrameData: function(){
+      return this._frame_data.slice(this.leftCropPosition, this.rightCropPosition);
+    },
+
+    toHash: function(){
+      return {
+              frames: this.croppedFrameData(),
+              metadata: {
+                formatVersion: 0.1,
+                generatedBy: 'LeapJS Playback 0.1-pre',
+                frames: this.rightCropPosition - this.leftCropPosition,
+                leapVersion: '2.0.0+13819'
+              }
+            }
+    },
+
     // Returns the cropped data as JSON or compressed [todo]
     export: function(){
-      return LZString.compressToBase64(JSON.stringify(this._frame_data))
+      return LZString.compressToBase64(JSON.stringify(this.toHash()));
+    },
+
+    decompress: function(data){
+      return LZString.decompressFromBase64(data)
     }
-
-
 
 
   };
@@ -370,11 +406,10 @@
     return {
       frame: function (frame) {
         if (scope.player.state == 'recording') {
-          if (frame.hands.length > 1){
+          if (frame.hands.length > 0){
             scope.player._frame_data.push(frame)
           } else if ( scope.player._frame_data.length > 0){
-            scope.player.stop()
-            this.emit('playback.recordingFinished', scope.player)
+            scope.player.finishRecording()
           }
         }
       }

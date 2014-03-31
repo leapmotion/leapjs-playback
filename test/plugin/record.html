@@ -3,6 +3,8 @@
   <title>LeapJS Playback Recorder</title>
   <link href="stylesheets/bootstrap.css" rel="stylesheet">
   <link href="stylesheets/angular.rangeSlider.css" rel="stylesheet">
+  <!--<link href="stylesheets/font-awesome.css" rel="stylesheet"> -->
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
   <!--<script src="javascripts/bootstrap.js"></script>-->
   <script src="javascripts/jquery-2.1.0.min.js"></script>
   <script src="javascripts/lz-string-1.3.3.js"></script>
@@ -48,14 +50,14 @@
   <div id="range" pin-handle="{{pinHandle}}" range-slider min="0" max="maxFrames()" model-min="leftHandlePosition" model-max="rightHandlePosition" ng-show="mode == 'crop' || mode == 'playback'"></div>
   <!--<a href="#">Save As</a>-->
   <div class="btn-group btn-group-lg" data-toggle="buttons">
-    <button type="button" class="btn btn-default" ng-click="record()" ng-class="{active: mode=='record'}">
-      Record
+    <button type="button" class="btn btn-default" ng-click="record()" ng-class="{active: mode=='record'}" id="record">
+      <i class="fa fa-circle" ng-show="!stopOnRecordButtonClick"></i> <i ng-show="stopOnRecordButtonClick" class="fa fa-stop"></i> Record
     </button>
     <button type="button" class="btn btn-default" ng-click="crop()" ng-class="{active: mode=='crop'}" ng-disabled="!player().loaded()">
       Crop
     </button>
     <button type="button" class="btn btn-default" ng-click="playback()" ng-class="{active: mode=='playback'}" ng-disabled="!player().loaded()">
-      <span ng-show="!pauseOnPlaybackButtonClick()">&#9654;</span><span ng-show="pauseOnPlaybackButtonClick()">‖</span>Playback
+      <span ng-show="!pauseOnPlaybackButtonClick()">&#9654;</span><span ng-show="pauseOnPlaybackButtonClick()">&#xf04c;</span>Playback
     </button>
   </div>
   <div class="btn-group btn-group-lg" data-toggle="buttons">
@@ -66,17 +68,12 @@
 
 <script>
   (window.controller = new Leap.Controller)
-    .use('playback', {recording: 'brian.json'})
+    .use('playback', {recording: 'brian.lz'})
+//    .use('playback')
     .use('handHold')
     .use('handEntry')
     .use('riggedHand')
     .connect();
-
-//    window.controller.plugins.playback.record();
-
-  window.controller.on('playback.recordingFinished', function(){
-    cropControl.trigger('click');
-  });
 </script>
 
 </body>

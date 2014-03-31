@@ -34,14 +34,16 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
       player().rightCrop()
 
   $scope.record = ->
+    $scope.paused = $scope.stopOnRecordButtonClick()
+    if $scope.mode != 'record'
+      # clear any existing hands:
+      # move to reset method on rigged hand?
+      for hand in player().controller.lastConnectionFrame.hands
+        player().controller.emit('handLost', hand)
+
     $scope.mode = 'record'
 
-    # clear any existing hands:
-    # move to reset method on rigged hand?
-    for hand in player().controller.lastConnectionFrame.hands
-      player().controller.emit('handLost', hand)
-
-    player().record()
+    if $scope.paused then player().record() else player().stop()
 
   $scope.crop = ->
     $scope.mode = 'crop'
@@ -56,6 +58,9 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
     , 0
     player().pause()
 
+  $scope.stopOnRecordButtonClick = ->
+    $scope.mode == 'record' && !$scope.paused
+
   $scope.pauseOnPlaybackButtonClick = ->
     $scope.mode == 'playback' && !$scope.paused
 
@@ -64,8 +69,12 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
     $scope.$apply()
 
   window.controller.on 'playback.ajax:complete', (player)->
-    # re-check disabled buttons
+    # re-check disa1bled buttons
     $scope.$apply()
+
+  window.controller.on 'playback.recordingFinished', ->
+    document.getElementById('record').blur()
+    $scope.playback()
 
   $scope.playback = ()->
     $scope.paused = $scope.pauseOnPlaybackButtonClick()
