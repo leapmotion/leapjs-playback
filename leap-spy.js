@@ -204,6 +204,7 @@
       if (this.overlay) this.showOverlay();
       var player = this;
 
+
       // prevent the normal controller response while playing
       this.controller.connection.removeAllListeners('frame');
       this.controller.connection.on('frame', function (frame) {
@@ -222,8 +223,7 @@
 
       function _play() {
         if (player.state != 'playing') return;
-        if (player._frame_data_index == 500) debugger;
-        if (player._frame_data_index == 500) debugger;
+        player.sendCurrentSectionFrame() || (player.sendFrame(player._current_frame()) && player._advance());
 
         if (!player.options.loop && (player.currentFrameIndex > player._frame_data_index)) {
           player.state = 'idle';

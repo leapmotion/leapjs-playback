@@ -14,6 +14,7 @@ recorder.controller 'Controls', ['$scope', '$location', ($scope, $location)->
   $scope.mode = 'record'
   $scope.min = 0
   $scope.max = $scope.maxFrames()
+  $scope.paused = false
 
   $scope.$watch 'min', (newVal, oldVal) ->
     player().setFrameIndex(parseInt(newVal, 10))
@@ -37,9 +38,16 @@ recorder.controller 'Controls', ['$scope', '$location', ($scope, $location)->
     $scope.mode = 'crop'
     player().pause()
 
+  $scope.pauseOnPlaybackButtonClick = ->
+    $scope.mode == 'playback' && !$scope.paused
+
   $scope.playback = ->
+    $scope.paused = $scope.pauseOnPlaybackButtonClick()
+
     $scope.mode = 'playback'
-    player().play()
+
+    if $scope.paused then player().pause() else player().play()
+
 
   $scope.save = ->
     saveAs(new Blob([player().export()], {type: "text/JSON;charset=utf-8"}), 'lz4.json')

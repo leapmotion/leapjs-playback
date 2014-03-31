@@ -50,7 +50,7 @@
   <div class="btn-group btn-group-lg" data-toggle="buttons">
     <button type="button" class="btn btn-default" ng-click="record()" ng-class="{active: mode=='record'}">Record</button>
     <button type="button" class="btn btn-default" ng-click="crop()" ng-class="{active: mode=='crop'}">Crop</button>
-    <button type="button" class="btn btn-default" ng-click="playback()" ng-class="{active: mode=='playback'}">Playback</button>
+    <button type="button" class="btn btn-default" ng-click="playback()" ng-class="{active: mode=='playback'}"><span ng-show="!pauseOnPlaybackButtonClick()">&#9654;</span><span ng-show="pauseOnPlaybackButtonClick()">‖</span>Playback</button>
   </div>
   <div class="btn-group btn-group-lg" data-toggle="buttons">
     <button type="button" class="btn btn-default" ng-click="save()">Download</button>

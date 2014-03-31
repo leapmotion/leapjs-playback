@@ -16,6 +16,7 @@
       $scope.mode = 'record';
       $scope.min = 0;
       $scope.max = $scope.maxFrames();
+      $scope.paused = false;
       $scope.$watch('min', function(newVal, oldVal) {
         player().setFrameIndex(parseInt(newVal, 10));
         return player().leftCrop();
@@ -38,9 +39,17 @@
         $scope.mode = 'crop';
         return player().pause();
       };
+      $scope.pauseOnPlaybackButtonClick = function() {
+        return $scope.mode === 'playback' && !$scope.paused;
+      };
       $scope.playback = function() {
+        $scope.paused = $scope.pauseOnPlaybackButtonClick();
         $scope.mode = 'playback';
-        return player().play();
+        if ($scope.paused) {
+          return player().pause();
+        } else {
+          return player().play();
+        }
       };
       return $scope.save = function() {
         return saveAs(new Blob([player()["export"]()], {
