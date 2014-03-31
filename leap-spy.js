@@ -84,26 +84,6 @@
       }
     },
 
-    // TODO: Why does this method have such weird behavior??
-    _frames: function () {
-      var end = this._frame_data.slice(0, this._frame_data_index);
-      return end.concat(this._frame_data.slice(this._frame_data_index));
-    },
-
-    /**
-     * returns a set of frames; "unspools" the frames stack.
-     * note, the index is NOT the length of the frames.
-     * @returns {{frames: [Frame], index: int, maxFrames: int}}
-     */
-    data: function () {
-      return {
-        frames: this._frames(),
-        first_frame: this._frame_data_index - this._frame_data.length,
-        last_frame: this._frame_data_index,
-        maxFrames: this.maxFrames
-      };
-    },
-
     sendFrame: function (frameData) {
       if (!frameData) throw "Frame data not provided";
       // note that currently frame json is sent as nested arrays, unnecessarily.  That should be fixed.
