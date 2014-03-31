@@ -7,7 +7,7 @@ recorder = angular.module('Recorder', ['ui-rangeSlider'])
 player = ->
   window.controller.plugins.playback.player
 
-recorder.controller 'Controls', ['$scope', '$location', ($scope, $location)->
+recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $location, $document)->
   $scope.maxFrames = ->
     window.controller.plugins.playback.player.maxFrames - 1
 
@@ -73,6 +73,11 @@ recorder.controller 'Controls', ['$scope', '$location', ($scope, $location)->
     $scope.pinHandle = 'min'
 
     if $scope.paused then player().pause() else player().play()
+
+  $document.bind 'keypress', (e)->
+    if e.which == 32
+      $scope.playback()
+
 
   window.controller.on 'frame', (frame)->
     return unless $scope.mode == 'playback'

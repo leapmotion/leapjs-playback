@@ -9,7 +9,7 @@
   };
 
   recorder.controller('Controls', [
-    '$scope', '$location', function($scope, $location) {
+    '$scope', '$location', '$document', function($scope, $location, $document) {
       $scope.maxFrames = function() {
         return window.controller.plugins.playback.player.maxFrames - 1;
       };
@@ -84,6 +84,11 @@
           return player().play();
         }
       };
+      $document.bind('keypress', function(e) {
+        if (e.which === 32) {
+          return $scope.playback();
+        }
+      });
       window.controller.on('frame', function(frame) {
         if ($scope.mode !== 'playback') {
           return;
