@@ -41,10 +41,10 @@
 
   </script>
 </head>
-<body ng-app="Recorder">
+<body>
 
 
-<div id="controls" data-ng-controller="Controls">
+<div id="controls" ng-app="Recorder" data-ng-controller="Controls">
   <div range-slider min="0" max="maxFrames()" model-min="min" model-max="max" ng-show="mode == 'crop'"></div>
   <!--<a href="#">Save As</a>-->
   <div class="btn-group btn-group-lg" data-toggle="buttons">

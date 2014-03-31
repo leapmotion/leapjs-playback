@@ -13,7 +13,7 @@
       $scope.maxFrames = function() {
         return window.controller.plugins.playback.player.maxFrames - 1;
       };
-      $scope.mode = 'record';
+      $scope.mode = player().loading ? 'playback' : 'record';
       $scope.min = 0;
       $scope.max = $scope.maxFrames();
       $scope.paused = false;
@@ -43,6 +43,9 @@
       $scope.pauseOnPlaybackButtonClick = function() {
         return $scope.mode === 'playback' && !$scope.paused;
       };
+      window.controller.on('ajax:begin', function(player) {
+        return $scope.mode = 'playback';
+      });
       window.controller.on('ajax:complete', function(player) {
         return $scope.$apply();
       });

@@ -17,6 +17,7 @@
     this._frame_data_index = 0;
     this.controller = controller;
     this.scrollSections = this.options.scrollSections;
+    this.loading = false;
 
     if (options) {
       if (!isNaN(options)) {
@@ -247,6 +248,7 @@
                 if (callback) {
                   callback.call(player, options.recording);
                 }
+                player.loading = false;
                 controller.emit('ajax:complete', player);
               } else {
                 console.error('Leap Playback: "' + url + '" seems to be unreachable or the file is empty.');
@@ -256,6 +258,8 @@
             }
           }
         };
+        player.loading = true;
+        controller.emit('ajax:begin', player);
         xhr.open("GET", options.recording, true);
         xhr.send(null);
       }
