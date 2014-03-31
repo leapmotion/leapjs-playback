@@ -131,6 +131,10 @@
       }
     },
 
+    loaded: function(){
+      return this._frame_data && this._frame_data.length
+    },
+
     // sets the current frame based upon fractional completion, where 0 is the first frame and 1 is the last
     // accepts an options hash with:
     // - completion [Number, 0..1]
@@ -263,6 +267,7 @@
                 if (callback) {
                   callback.call(player, options.recording);
                 }
+                controller.emit('ajax:complete', player);
               } else {
                 console.error('Leap Playback: "' + url + '" seems to be unreachable or the file is empty.');
               }

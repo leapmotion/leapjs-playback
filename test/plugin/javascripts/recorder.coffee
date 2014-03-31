@@ -15,6 +15,8 @@ recorder.controller 'Controls', ['$scope', '$location', ($scope, $location)->
   $scope.min = 0
   $scope.max = $scope.maxFrames()
   $scope.paused = false
+  $scope.player = player
+
 
   $scope.$watch 'min', (newVal, oldVal) ->
     player().setFrameIndex(parseInt(newVal, 10))
@@ -41,7 +43,11 @@ recorder.controller 'Controls', ['$scope', '$location', ($scope, $location)->
   $scope.pauseOnPlaybackButtonClick = ->
     $scope.mode == 'playback' && !$scope.paused
 
-  $scope.playback = ->
+  window.controller.on 'ajax:complete', (player)->
+    # re-check disabled buttons
+    $scope.$apply()
+
+  $scope.playback = ($event)->
     $scope.paused = $scope.pauseOnPlaybackButtonClick()
 
     $scope.mode = 'playback'

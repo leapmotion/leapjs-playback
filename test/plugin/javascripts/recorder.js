@@ -17,6 +17,7 @@
       $scope.min = 0;
       $scope.max = $scope.maxFrames();
       $scope.paused = false;
+      $scope.player = player;
       $scope.$watch('min', function(newVal, oldVal) {
         player().setFrameIndex(parseInt(newVal, 10));
         return player().leftCrop();
@@ -42,7 +43,10 @@
       $scope.pauseOnPlaybackButtonClick = function() {
         return $scope.mode === 'playback' && !$scope.paused;
       };
-      $scope.playback = function() {
+      window.controller.on('ajax:complete', function(player) {
+        return $scope.$apply();
+      });
+      $scope.playback = function($event) {
         $scope.paused = $scope.pauseOnPlaybackButtonClick();
         $scope.mode = 'playback';
         if ($scope.paused) {
