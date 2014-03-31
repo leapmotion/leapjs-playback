@@ -85,6 +85,8 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
 
   $document.bind 'keypress', (e)->
     if e.which == 32
+      # prevent spacebar from activating buttons
+      e.originalEvent.target.blur()
       $scope.playback()
     if e.which == 102
       if (document.body.requestFullscreen)

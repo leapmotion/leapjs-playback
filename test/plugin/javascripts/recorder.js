@@ -100,6 +100,7 @@
       };
       $document.bind('keypress', function(e) {
         if (e.which === 32) {
+          e.originalEvent.target.blur();
           $scope.playback();
         }
         if (e.which === 102) {
