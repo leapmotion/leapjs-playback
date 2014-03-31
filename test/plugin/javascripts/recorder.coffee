@@ -8,15 +8,20 @@ player = ->
   window.controller.plugins.playback.player
 
 recorder.controller 'Controls', ['$scope', '$location', ($scope, $location)->
+  $scope.maxFrames = ->
+    window.controller.plugins.playback.player.maxFrames - 1
+
   $scope.mode = 'record'
   $scope.min = 0
-  $scope.max = 1
+  $scope.max = $scope.maxFrames()
 
   $scope.$watch 'min', (newVal, oldVal) ->
-    player().setPosition(parseFloat(newVal, 10))
+    player().setFrameIndex(parseInt(newVal, 10))
+    player().leftCrop()
 
   $scope.$watch 'max', (newVal, oldVal) ->
-    player().setPosition(parseFloat(newVal, 10))
+    player().setFrameIndex(parseInt(newVal, 10))
+    player().rightCrop()
 
   $scope.record = ->
     $scope.mode = 'record'
@@ -37,5 +42,5 @@ recorder.controller 'Controls', ['$scope', '$location', ($scope, $location)->
     player().play()
 
   $scope.save = ->
-    saveAs(new Blob([player().export()], {type: "text/JSON;charset=utf-8"}), 'recording.json')
+    saveAs(new Blob([player().export()], {type: "text/JSON;charset=utf-8"}), 'lz4.json')
 ]

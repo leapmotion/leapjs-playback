@@ -10,14 +10,19 @@
 
   recorder.controller('Controls', [
     '$scope', '$location', function($scope, $location) {
+      $scope.maxFrames = function() {
+        return window.controller.plugins.playback.player.maxFrames - 1;
+      };
       $scope.mode = 'record';
       $scope.min = 0;
-      $scope.max = 1;
+      $scope.max = $scope.maxFrames();
       $scope.$watch('min', function(newVal, oldVal) {
-        return player().setPosition(parseFloat(newVal, 10));
+        player().setFrameIndex(parseInt(newVal, 10));
+        return player().leftCrop();
       });
       $scope.$watch('max', function(newVal, oldVal) {
-        return player().setPosition(parseFloat(newVal, 10));
+        player().setFrameIndex(parseInt(newVal, 10));
+        return player().rightCrop();
       });
       $scope.record = function() {
         var hand, _i, _len, _ref;
@@ -40,7 +45,7 @@
       return $scope.save = function() {
         return saveAs(new Blob([player()["export"]()], {
           type: "text/JSON;charset=utf-8"
-        }), 'recording.json');
+        }), 'lz4.json');
       };
     }
   ]);

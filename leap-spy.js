@@ -65,21 +65,22 @@
     // pushes a new frame on to frame data, or returns the latest frame
     _current_frame: function (frame) {
       if (frame) {
-        this._frame_data[this._index()] = [frame, new Date().getTime()];
+        this._frame_data[this._frame_data_index] = [frame, new Date().getTime()];
         return frame;
       } else {
-        return this._frame_data[this._index()];
+        return this._frame_data[this._frame_data_index];
       }
     },
 
-    _index: function () {
-      return this._frame_data_index % this.maxFrames;
-    },
 
     _advance: function () {
       this._frame_data_index += 1;
-      if (!(this._frame_data_index % this.maxFrames) && this.state == 'recording') {
-        this.emit('maxFrames');
+      this._frame_data_index = this._frame_data_index % this.rightCropPosition;
+      if ((this._frame_data_index == 0)) {
+        this._frame_data_index += this.leftCropPosition;
+        if (this.state == 'recording') {
+          this.emit('maxFrames');
+        }
       }
     },
 
@@ -111,7 +112,7 @@
       // send a deviceFrame to the controller:
       // this happens before
       this.controller.processFrame(frame);
-      this.currentFrameIndex = this._index();
+      this.currentFrameIndex = this._frame_data_index;
       return true
     },
 
@@ -125,6 +126,8 @@
         this._frame_data = recording.frames;
         this._frame_data_index = 0;
         this.maxFrames = recording.frames.length;
+        this.leftCropPosition = 0;
+        this.rightCropPosition = this.maxFrames;
       }
     },
 
@@ -134,21 +137,29 @@
     // - recording
     setSectionPosition: function (section) {
       if (section.recording.frames === undefined) return; // whilst AJAX in-flight
-      var position = Math.round(section.completion * section.recording.frames.length);
+      var frameIndex = Math.round(section.completion * section.recording.frames.length);
 
-      if (position != section.currentPosition){
-        section.currentPosition = position;
-        this.sendFrame(section.recording.frames[position]);
+      if (frameIndex != section.currentPosition){
+        section.currentPosition = frameIndex;
+        this.sendFrame(section.recording.frames[frameIndex]);
       }
     },
     
-    setPosition: function(completion){
-      var position = Math.round(completion * this.maxFrames);
-
-      if (position != this._index()){
-        this._frame_data_index = position;
+    setFrameIndex: function(frameIndex){
+      if (frameIndex != this._frame_data_index){
+        this._frame_data_index = frameIndex;
         this.sendFrame(this._current_frame());
       }
+    },
+
+    // sets the crop-point of the current recording to the current position.
+    leftCrop: function(){
+      this.leftCropPosition = this._frame_data_index
+    },
+
+    // sets the crop-point of the current recording to the current position.
+    rightCrop: function(){
+      this.rightCropPosition = this._frame_data_index
     },
 
     // returns false unless sections are defined
@@ -211,9 +222,10 @@
 
       function _play() {
         if (player.state != 'playing') return;
-        player.sendCurrentSectionFrame() || (player.sendFrame(player._current_frame()) && player._advance());
+        if (player._frame_data_index == 500) debugger;
+        if (player._frame_data_index == 500) debugger;
 
-        if (!player.options.loop && (player.currentFrameIndex > player._index())) {
+        if (!player.options.loop && (player.currentFrameIndex > player._frame_data_index)) {
           player.state = 'idle';
         } else {
           requestAnimationFrame(_play);
@@ -274,8 +286,7 @@
 
     // Returns the cropped data as JSON or compressed [todo]
     export: function(){
-      return JSON.stringify(this._frame_data)
-//      return this._frame_data
+      return LZString.compressToBase64(JSON.stringify(this._frame_data))
     }
 
 
