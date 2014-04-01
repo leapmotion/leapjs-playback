@@ -198,20 +198,19 @@
 <script>
   (window.controller = new Leap.Controller)
     .use('playback', {recording: 'brian.lz', onlyWhenDisconnected: false})
-//    .use('playback')
     .use('handHold')
     .use('handEntry')
     .use('riggedHand')
     .connect()
 
 
-  controls = new THREE.TrackballControls( window.controller.plugins.riggedHand.camera )
-  controller.on('frame', function(){
-    controls.update()
-  });
-  window.addEventListener( 'resize', function(){
-    controls.handleResize();
-  });
+//  controls = new THREE.TrackballControls( window.controller.plugins.riggedHand.camera )
+//  controller.on('frame', function(){
+//    controls.update()
+//  });
+//  window.addEventListener( 'resize', function(){
+//    controls.handleResize();
+//  });
 
 </script>
 
