@@ -79,8 +79,8 @@
     _advance: function () {
       this._frame_data_index += 1;
       this._frame_data_index = this._frame_data_index % this.rightCropPosition;
-      if ((this._frame_data_index == 0)) {
-        this._frame_data_index += this.leftCropPosition;
+      if ((this._frame_data_index < this.leftCropPosition)) {
+        this._frame_data_index = this.leftCropPosition;
         if (this.state == 'recording') {
           this.emit('maxFrames');
         }
