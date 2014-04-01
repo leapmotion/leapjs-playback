@@ -147,10 +147,18 @@
         });
         return $scope.inDigestLoop = false;
       });
-      $scope.save = function() {
-        return saveAs(new Blob([player()["export"]()], {
-          type: "text/JSON;charset=utf-8"
-        }), 'lz4.json');
+      $scope.save = function(format) {
+        var filename;
+        filename = 'leap-playback-recording';
+        if (format === 'json') {
+          return saveAs(new Blob([player()["export"]('json')], {
+            type: "text/JSON;charset=utf-8"
+          }), "" + filename + ".json");
+        } else {
+          return saveAs(new Blob([player()["export"]('lz')], {
+            type: "text/JSON;charset=utf-8"
+          }), "" + filename + ".lz");
+        }
       };
       if (player().loading) {
         return $scope.playback();

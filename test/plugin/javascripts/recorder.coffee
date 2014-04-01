@@ -127,8 +127,12 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
     $scope.inDigestLoop = false
 
 
-  $scope.save = ->
-    saveAs(new Blob([player().export()], {type: "text/JSON;charset=utf-8"}), 'lz4.json')
+  $scope.save = (format)->
+    filename = 'leap-playback-recording'
+    if format == 'json'
+      saveAs(new Blob([player().export('json')], {type: "text/JSON;charset=utf-8"}), "#{filename}.json")
+    else
+      saveAs(new Blob([player().export('lz')], {type: "text/JSON;charset=utf-8"}), "#{filename}.lz")
 
   if player().loading then $scope.playback() else $scope.record()
 ]

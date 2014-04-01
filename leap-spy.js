@@ -325,9 +325,15 @@
             }
     },
 
-    // Returns the cropped data as JSON or compressed [todo]
-    export: function(){
-      return LZString.compressToBase64(JSON.stringify(this.toHash()));
+    // Returns the cropped data as JSON or compressed
+    // Requires LZString library for compression
+    // http://pieroxy.net/blog/pages/lz-string/index.html
+    export: function(format){
+      var json = JSON.stringify(this.toHash());
+
+      if (format == 'json' || !LZString) return json;
+
+      return LZString.compressToBase64(json);
     },
 
     decompress: function(data){

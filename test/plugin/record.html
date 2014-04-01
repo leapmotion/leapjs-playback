@@ -1,12 +1,11 @@
+<!DOCTYPE HTML>
 <html>
 <head>
   <title>LeapJS Playback Recorder</title>
-  <link href="stylesheets/bootstrap.css" rel="stylesheet">
+  <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
   <link href="stylesheets/angular.rangeSlider.css" rel="stylesheet">
-  <!--<link href="stylesheets/font-awesome.css" rel="stylesheet"> -->
-  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
-  <!--<script src="javascripts/bootstrap.js"></script>-->
   <script src="javascripts/jquery-2.1.0.min.js"></script>
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
   <script src="javascripts/lz-string-1.3.3.js"></script>
   <script src="javascripts/FileSaver.js"></script>
   <script src="javascripts/angular.js"></script>
@@ -36,13 +35,13 @@
       text-align: center;
       z-index: 20;
     }
-    .fa.orange{
+    .glyphicon.orange{
       color: orange;
       text-shadow: 0px 0px 3px orange;
       -webkit-animation: pulsate 3s ease-in-out;
       -webkit-animation-iteration-count: infinite;
     }
-    .fa.red{
+    .glyphicon.red{
       color: red;
       text-shadow: 0px 0px 3px red;
     }
@@ -67,17 +66,28 @@
   <!--<a href="#">Save As</a>-->
   <div class="btn-group btn-group-lg" data-toggle="buttons">
     <button type="button" class="btn btn-default" ng-click="record()" ng-class="{active: mode=='record'}" id="record">
-      <i class="fa fa-circle" ng-class="{orange: player().recordPending(), red: player().recording()}" ng-show="stopOnRecordButtonClick"></i> Record
+      <i class="glyphicon glyphicon-record" ng-class="{orange: player().recordPending(), red: player().recording()}" ng-show="stopOnRecordButtonClick"></i> Record
     </button>
     <button type="button" class="btn btn-default" ng-click="crop()" ng-class="{active: mode=='crop'}" ng-disabled="!player().loaded()">
       Crop
     </button>
     <button type="button" class="btn btn-default" ng-click="playback()" ng-class="{active: mode=='playback'}" ng-disabled="!player().loaded()">
-      <span ng-show="!pauseOnPlaybackButtonClick()">&#9654;</span><span ng-show="pauseOnPlaybackButtonClick()"><i class="fa fa-pause"></i> </span>Playback
+      <span ng-show="!pauseOnPlaybackButtonClick()">&#9654;</span><span ng-show="pauseOnPlaybackButtonClick()"><i class="glyphicon glyphicon-pause"></i> </span>Playback
     </button>
   </div>
-  <div class="btn-group btn-group-lg" data-toggle="buttons">
-    <button type="button" class="btn btn-default" ng-click="save()">Download</button>
+
+
+
+  <div class="btn-group btn-group-lg dropup" style="text-align: left;">
+    <button type="button" class="btn btn-default">Download</button>
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+      <span class="caret"></span>
+      <span class="sr-only">Toggle Dropdown</span>
+    </button>
+    <ul class="dropdown-menu" role="menu">
+      <li><a href="#" ng-click="save()"><b>Compressed</b></a></li>
+      <li><a href="#"  ng-click="save('json')">As JSON</a></li>
+    </ul>
   </div>
 </div>
 
