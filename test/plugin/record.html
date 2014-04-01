@@ -1,9 +1,20 @@
+<!DOCTYPE HTML>
 <html>
 <head>
   <title>LeapJS Playback Recorder</title>
-  <link href="stylesheets/bootstrap.css" rel="stylesheet">
-  <script src="javascripts/bootstrap.js"></script>
+  <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+  <link href="stylesheets/angular.rangeSlider.css" rel="stylesheet">
+  <script src="javascripts/jquery-2.1.0.min.js"></script>
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+  <script src="javascripts/lz-string-1.3.3.js"></script>
+  <script src="javascripts/FileSaver.js"></script>
+  <script src="javascripts/spin.min.js"></script>
+  <script src="javascripts/angular.js"></script>
+  <script src="javascripts/angular.rangeSlider.js"></script>
+  <script src="javascripts/angular-spinner.min.js"></script>
+  <script src="javascripts/recorder.js"></script>
   <script src="javascripts/three.min.js"></script>
+  <script type="text/javascript" src="javascripts/TrackballControls.js"></script>
   <script src="javascripts/leap-skeleton-deviceEvents.js"></script>
   <script src="javascripts/leap-plugins-0.1.3-master.js"></script>
   <script src="javascripts/leap.rigged-hand.js"></script>
@@ -27,6 +38,69 @@
       text-align: center;
       z-index: 20;
     }
+    .glyphicon.orange{
+      color: orange;
+      text-shadow: 0px 0px 3px orange;
+      -webkit-animation: pulsate 3s ease-in-out;
+      -webkit-animation-iteration-count: infinite;
+    }
+    .glyphicon.red{
+      color: red;
+      text-shadow: 0px 0px 3px red;
+    }
+
+    @-webkit-keyframes pulsate {
+        0% {opacity: 1.0; color: orange;}
+        50% { opacity: 0.6; color: #D98F00;}
+        100% {opacity: 1.0; color: orange;}
+    }
+
+
+    .playback-move-hand{
+      -webkit-animation: breatheDeep 2s infinite alternate;
+        -moz-animation: breatheDeep 2s infinite alternate;
+        -animation: breatheDeep 2s infinite alternate;
+    }
+
+    .playback-connect-leap{
+      -webkit-animation: breatheShallow 2s infinite alternate;
+      -moz-animation: breatheShallow 2s infinite alternate;
+      -animation: breatheShallow 2s infinite alternate;
+    }
+
+    #connect-leap {
+      margin-top: 400px !important;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    @-webkit-keyframes breatheShallow {
+      from { opacity: 0.8 }
+      to { opacity: 1 }
+    }
+    @-moz-keyframes breatheShallow {
+      from { opacity: 0.8 }
+      to { opacity: 1 }
+    }
+    @keyframes breatheShallow {
+      from { opacity: 0.8 }
+      to { opacity: 1 }
+    }
+    @-webkit-keyframes breatheDeep {
+      from { opacity: 0.6 }
+      to { opacity: 1 }
+    }
+    @-moz-keyframes breatheDeep {
+      from { opacity: 0.6 }
+      to { opacity: 1 }
+    }
+    @keyframes breatheDeep {
+      from { opacity: 0.6 }
+      to { opacity: 1 }
+    }
   </style>
   <script type="text/javascript">
 
@@ -36,35 +110,109 @@
 </head>
 <body>
 
-<div id="controls">
+
+<div id="controls" ng-app="Recorder" data-ng-controller="Controls">
+  <div id="range" pin-handle="{{pinHandle}}" range-slider min="0" max="maxFrames()" model-min="leftHandlePosition" model-max="rightHandlePosition" ng-show="mode == 'crop' || mode == 'playback'"></div>
   <!--<a href="#">Save As</a>-->
-  <div class="btn-group btn-group-lg" data-toggle="buttons">
-    <button type="button" class="btn btn-default" id="record">Record</button>
-    <button type="button" class="btn btn-default">Crop</button>
-    <button type="button" class="btn btn-default">Playback</button>
+  <div class="btn-group btn-group-lg dropup" data-toggle="buttons">
+
+    <button type="button" class="btn btn-default" ng-click="record()" ng-class="{active: mode=='record'}" id="record">
+      <i class="glyphicon glyphicon-record" ng-class="{orange: player().recordPending(), red: player().recording()}" ng-show="stopOnRecordButtonClick"></i> Record
+    </button>
+
+    <button type="button" class="btn btn-default" ng-click="crop()" ng-class="{active: mode=='crop'}" ng-disabled="!player().loaded()">
+      <span style="margin-top: -2px; display: inline-block; vertical-align: top;">[ ]</span> Crop
+    </button>
+
+    <button style="text-align: left" type="button" class="btn btn-default" ng-click="playback()" ng-class="{active: mode=='playback'}" ng-disabled="!player().loaded()">
+      <span ng-show="player().loading" us-spinner="{radius:4, width:2, length: 4, left: '20px'}" style="width: 18px; display: inline-block;"></span>
+      <span ng-show="!player().loading && !pauseOnPlaybackButtonClick()">&#9654;</span> <span ng-show="!player().loading && pauseOnPlaybackButtonClick()"><i class="glyphicon glyphicon-pause"></i> </span>Playback
+    </button>
+    <!--
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu" role="menu" style="right: 0; left: auto; min-width: 154px;">
+      <li><a href="#" ng-click="load()">Upload</a></li>
+    </ul>
+    -->
+
+  </div>
+
+
+
+  <div class="btn-group btn-group-lg dropup" style="text-align: left;">
+    <button type="button" class="btn btn-default" ng-click="save()">Download</button>
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu" role="menu">
+      <li><a href="#" ng-click="save()"><b>Compressed</b></a></li>
+      <li><a href="#" ng-click="save('json')">As JSON</a></li>
+    </ul>
+  </div>
+</div>
+
+
+<div class="modal fade" id="helpModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Shortcuts</h4>
+      </div>
+      <div class="modal-body">
+          <table>
+            <tr>
+              <td>r</td>
+              <td> &nbsp;:&nbsp;</td>
+              <td>record</td>
+            </tr>
+            <tr>
+              <td>c</td>
+              <td> &nbsp;:&nbsp;</td>
+              <td>crop</td>
+            </tr>
+            <tr>
+              <td>p</td>
+              <td> &nbsp;:&nbsp;</td>
+              <td>playback</td>
+            </tr>
+            <tr>
+              <td>f</td>
+              <td> &nbsp;:&nbsp;</td>
+              <td>fullscreen</td>
+            </tr>
+            <tr>
+              <td>?</td>
+              <td> &nbsp;:&nbsp;</td>
+              <td>help</td>
+            </tr>
+          </table>
+      </div>
+    </div>
   </div>
 </div>
 
 
 <script>
   (window.controller = new Leap.Controller)
-    .use('playback')
+    .use('playback', {recording: 'brian.lz', onlyWhenDisconnected: false})
+//    .use('playback')
     .use('handHold')
     .use('handEntry')
     .use('riggedHand')
-    .connect();
+    .connect()
 
-  var recordControl = document.getElementById('record'),
-      cropControl = document.getElementById('crop'),
-      playbackControl = document.getElementById('playback');
 
-  recordControl.onclick = function(){
-    window.controller.plugins.playback.record();
-  }
-
-  window.controller.on('playback.recordingFinished', function(){
-    cropControl.trigger('click');
+  controls = new THREE.TrackballControls( window.controller.plugins.riggedHand.camera )
+  controller.on('frame', function(){
+    controls.update()
   });
+  window.addEventListener( 'resize', function(){
+    controls.handleResize();
+  });
+
 </script>
 
 </body>
