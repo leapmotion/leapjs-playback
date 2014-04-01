@@ -113,7 +113,9 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
       when 112
         $scope.playback()
       when 47, 63
-        console.log 'show help'
+        $('#helpModal').modal('show')
+      when 27
+        $('#helpModal').modal('hide')
       else
         console.log "unbound keycode: #{e.which}"
 

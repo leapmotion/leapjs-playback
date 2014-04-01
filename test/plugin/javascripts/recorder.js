@@ -132,7 +132,9 @@
             return $scope.playback();
           case 47:
           case 63:
-            return console.log('show help');
+            return $('#helpModal').modal('show');
+          case 27:
+            return $('#helpModal').modal('hide');
           default:
             return console.log("unbound keycode: " + e.which);
         }

@@ -92,6 +92,47 @@
 </div>
 
 
+<div class="modal fade" id="helpModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Shortcuts</h4>
+      </div>
+      <div class="modal-body">
+          <table>
+            <tr>
+              <td>r</td>
+              <td> &nbsp;:&nbsp;</td>
+              <td>record</td>
+            </tr>
+            <tr>
+              <td>c</td>
+              <td> &nbsp;:&nbsp;</td>
+              <td>crop</td>
+            </tr>
+            <tr>
+              <td>p</td>
+              <td> &nbsp;:&nbsp;</td>
+              <td>playback</td>
+            </tr>
+            <tr>
+              <td>f</td>
+              <td> &nbsp;:&nbsp;</td>
+              <td>fullscreen</td>
+            </tr>
+            <tr>
+              <td>?</td>
+              <td> &nbsp;:&nbsp;</td>
+              <td>help</td>
+            </tr>
+          </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <script>
   (window.controller = new Leap.Controller)
     .use('playback', {recording: 'brian.lz'})
