@@ -1,4 +1,4 @@
-recorder = angular.module('Recorder', ['ui-rangeSlider'])
+recorder = angular.module('Recorder', ['ui-rangeSlider', 'angularSpinner'])
 
 
 #recorder.factory 'Playback', ->
@@ -18,7 +18,6 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
   $scope.player = player
   $scope.inDigestLoop = false
   $scope.pinHandle = ''
-
 
   $scope.$watch 'leftHandlePosition', (newVal, oldVal) ->
     return if newVal == oldVal
@@ -73,6 +72,8 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
 
   window.controller.on 'playback.ajax:complete', (player)->
     # re-check disa1bled buttons
+    if $scope.mode == 'playback'
+      player.play()
     $scope.$apply()
 
   window.controller.on 'playback.recordingFinished', ->

@@ -2,7 +2,7 @@
 (function() {
   var player, recorder;
 
-  recorder = angular.module('Recorder', ['ui-rangeSlider']);
+  recorder = angular.module('Recorder', ['ui-rangeSlider', 'angularSpinner']);
 
   player = function() {
     return window.controller.plugins.playback.player;
@@ -85,6 +85,9 @@
         return $scope.$apply();
       });
       window.controller.on('playback.ajax:complete', function(player) {
+        if ($scope.mode === 'playback') {
+          player.play();
+        }
         return $scope.$apply();
       });
       window.controller.on('playback.recordingFinished', function() {

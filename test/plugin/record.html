@@ -11,6 +11,7 @@
   <script src="javascripts/spin.min.js"></script>
   <script src="javascripts/angular.js"></script>
   <script src="javascripts/angular.rangeSlider.js"></script>
+  <script src="javascripts/angular-spinner.min.js"></script>
   <script src="javascripts/recorder.js"></script>
   <script src="javascripts/three.min.js"></script>
   <script src="javascripts/leap-skeleton-deviceEvents.js"></script>
@@ -119,8 +120,9 @@
     <button type="button" class="btn btn-default" ng-click="crop()" ng-class="{active: mode=='crop'}" ng-disabled="!player().loaded()">
       Crop
     </button>
-    <button type="button" class="btn btn-default" id=playback ng-click="playback()" ng-class="{active: mode=='playback'}" ng-disabled="!player().loaded()">
-      <span ng-show="!pauseOnPlaybackButtonClick()">&#9654;</span> <span ng-show="pauseOnPlaybackButtonClick()"><i class="glyphicon glyphicon-pause"></i> </span>Playback
+    <button style="text-align: left" type="button" class="btn btn-default" ng-click="playback()" ng-class="{active: mode=='playback'}" ng-disabled="!player().loaded()">
+      <span ng-show="player().loading" us-spinner="{radius:4, width:2, length: 4, left: '20px'}" style="width: 18px; display: inline-block;"></span>
+      <span ng-show="!player().loading && !pauseOnPlaybackButtonClick()">&#9654;</span> <span ng-show="!player().loading && pauseOnPlaybackButtonClick()"><i class="glyphicon glyphicon-pause"></i> </span>Playback
     </button>
   </div>
 
@@ -134,7 +136,7 @@
     </button>
     <ul class="dropdown-menu" role="menu">
       <li><a href="#" ng-click="save()"><b>Compressed</b></a></li>
-      <li><a href="#"  ng-click="save('json')">As JSON</a></li>
+      <li><a href="#" ng-click="save('json')">As JSON</a></li>
     </ul>
   </div>
 </div>
