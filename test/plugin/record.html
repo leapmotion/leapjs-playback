@@ -14,6 +14,7 @@
   <script src="javascripts/angular-spinner.min.js"></script>
   <script src="javascripts/recorder.js"></script>
   <script src="javascripts/three.min.js"></script>
+  <script type="text/javascript" src="javascripts/TrackballControls.js"></script>
   <script src="javascripts/leap-skeleton-deviceEvents.js"></script>
   <script src="javascripts/leap-plugins-0.1.3-master.js"></script>
   <script src="javascripts/leap.rigged-hand.js"></script>
@@ -201,7 +202,17 @@
     .use('handHold')
     .use('handEntry')
     .use('riggedHand')
-    .connect();
+    .connect()
+
+
+  controls = new THREE.TrackballControls( window.controller.plugins.riggedHand.camera )
+  controller.on('frame', function(){
+    controls.update()
+  });
+  window.addEventListener( 'resize', function(){
+    controls.handleResize();
+  });
+
 </script>
 
 </body>
