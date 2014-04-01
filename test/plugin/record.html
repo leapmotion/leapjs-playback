@@ -118,7 +118,7 @@
       <i class="glyphicon glyphicon-record" ng-class="{orange: player().recordPending(), red: player().recording()}" ng-show="stopOnRecordButtonClick"></i> Record
     </button>
     <button type="button" class="btn btn-default" ng-click="crop()" ng-class="{active: mode=='crop'}" ng-disabled="!player().loaded()">
-      Crop
+      <span style="margin-top: -2px; display: inline-block; vertical-align: top;">[ ]</span> Crop
     </button>
     <button style="text-align: left" type="button" class="btn btn-default" ng-click="playback()" ng-class="{active: mode=='playback'}" ng-disabled="!player().loaded()">
       <span ng-show="player().loading" us-spinner="{radius:4, width:2, length: 4, left: '20px'}" style="width: 18px; display: inline-block;"></span>
@@ -129,7 +129,7 @@
 
 
   <div class="btn-group btn-group-lg dropup" style="text-align: left;">
-    <button type="button" class="btn btn-default">Download</button>
+    <button type="button" class="btn btn-default" ng-click="save()">Download</button>
     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
       <span class="caret"></span>
       <span class="sr-only">Toggle Dropdown</span>
