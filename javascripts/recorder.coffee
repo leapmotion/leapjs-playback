@@ -114,6 +114,8 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
         $scope.crop()
       when 112
         $scope.playback()
+      when 115
+        $scope.save()
       when 47, 63
         $('#helpModal').modal('show')
       when 27

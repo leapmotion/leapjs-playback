@@ -133,6 +133,8 @@
             return $scope.crop();
           case 112:
             return $scope.playback();
+          case 115:
+            return $scope.save();
           case 47:
           case 63:
             return $('#helpModal').modal('show');

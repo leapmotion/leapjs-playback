@@ -147,7 +147,6 @@
 
     finishRecording: function(){
       this.state = 'idle';
-      console.log('recording finished', this._frame_data.length);
       this.setFrames({frames: this._frame_data})
       this.controller.emit('playback.recordingFinished', this)
     },
@@ -316,8 +315,21 @@
       this.overlay.innerHTML = '';
     },
 
+    // returns frames without any circular references
     croppedFrameData: function(){
-      return this._frame_data.slice(this.leftCropPosition, this.rightCropPosition);
+      var frames = this._frame_data.slice(this.leftCropPosition, this.rightCropPosition),
+        frame;
+      for (var i = 0; i < frames.length; i++){
+        frame = frames[i];
+        delete frame.controller;
+        for(var j = 0; j < frame.hands.length; j++){
+          delete frame.hands[j].frame;
+        }
+        for (j = 0; j < frame.pointables.length; j++){
+          delete  frame.pointables[j].frame
+        }
+      }
+      return frames;
     },
 
     toHash: function(){
