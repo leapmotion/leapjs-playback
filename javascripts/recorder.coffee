@@ -9,7 +9,8 @@ player = ->
 
 recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $location, $document)->
   $scope.maxFrames = ->
-    window.controller.plugins.playback.player.maxFrames - 1
+#    console.log('max frames', window.controller.plugins.playback.player.maxFrames)
+    Math.max(window.controller.plugins.playback.player.maxFrames - 1, 0)
 
   $scope.mode = ''
   $scope.leftHandlePosition = 0
@@ -41,7 +42,7 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
         player().controller.emit('handLost', hand)
     $scope.mode = 'record'
 
-    if $scope.paused then player().stop() else player().record()
+    if $scope.paused then player().finishRecording() else player().record()
 
   $scope.crop = ->
     $scope.mode = 'crop'

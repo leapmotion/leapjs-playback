@@ -1,22 +1,22 @@
-/*
- * LeapJS-Plugins  - v0.1.3 - 2014-03-26
- * http://github.com/leapmotion/leapjs-plugins/
- *
- * Copyright 2014 LeapMotion, Inc
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
+/*    
+ * LeapJS-Plugins  - v0.1.3 - 2014-04-01    
+ * http://github.com/leapmotion/leapjs-plugins/    
+ *    
+ * Copyright 2014 LeapMotion, Inc    
+ *    
+ * Licensed under the Apache License, Version 2.0 (the "License");    
+ * you may not use this file except in compliance with the License.    
+ * You may obtain a copy of the License at    
+ *    
+ *     http://www.apache.org/licenses/LICENSE-2.0    
+ *    
+ * Unless required by applicable law or agreed to in writing, software    
+ * distributed under the License is distributed on an "AS IS" BASIS,    
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.    
+ * See the License for the specific language governing permissions and    
+ * limitations under the License.    
+ *    
+ */    
 
 //CoffeeScript generated from main/hand-entry/leap.hand-entry.coffee
 /*
@@ -236,6 +236,51 @@ More info on vec3 can be found, here: http://glmatrix.net/docs/2.2.0/symbols/vec
     Leap.Controller.plugin('screenPosition', screenPosition);
   } else if (typeof module !== 'undefined') {
     module.exports.screenPosition = screenPosition;
+  } else {
+    throw 'leap.js not included';
+  }
+
+}).call(this);
+
+//CoffeeScript generated from main/version-check/leap.version-check.coffee
+(function() {
+  var versionCheck;
+
+  versionCheck = function(scope) {
+    scope.alert || (scope.alert = false);
+    scope.requiredProtocolVersion || (scope.requiredProtocolVersion = 6);
+    scope.disconnect || (scope.disconnect = true);
+    if ((typeof Leap !== 'undefined') && Leap.Controller) {
+      if (Leap.version.minor < 5 && Leap.version.dot < 4) {
+        console.warn("LeapJS Version Check plugin incompatible with LeapJS pre 0.4.4");
+      }
+    }
+    this.on('ready', function() {
+      var current, required;
+      required = scope.requiredProtocolVersion;
+      current = this.connection.opts.requestProtocolVersion;
+      if (current < required) {
+        console.warn("Protocol Version too old. v" + required + " required, v" + current + " available.");
+        if (scope.disconnect) {
+          this.disconnect();
+        }
+        if (scope.alert) {
+          alert("Your Leap Software version is out of date.  Visit http://www.leapmotion.com/setup to update");
+        }
+        return this.emit('versionCheck.outdated', {
+          required: required,
+          current: current,
+          disconnect: scope.disconnect
+        });
+      }
+    });
+    return {};
+  };
+
+  if ((typeof Leap !== 'undefined') && Leap.Controller) {
+    Leap.Controller.plugin('versionCheck', versionCheck);
+  } else if (typeof module !== 'undefined') {
+    module.exports.versionCheck = versionCheck;
   } else {
     throw 'leap.js not included';
   }

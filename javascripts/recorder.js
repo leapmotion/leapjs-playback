@@ -11,7 +11,7 @@
   recorder.controller('Controls', [
     '$scope', '$location', '$document', function($scope, $location, $document) {
       $scope.maxFrames = function() {
-        return window.controller.plugins.playback.player.maxFrames - 1;
+        return Math.max(window.controller.plugins.playback.player.maxFrames - 1, 0);
       };
       $scope.mode = '';
       $scope.leftHandlePosition = 0;
@@ -54,7 +54,7 @@
         }
         $scope.mode = 'record';
         if ($scope.paused) {
-          return player().stop();
+          return player().finishRecording();
         } else {
           return player().record();
         }

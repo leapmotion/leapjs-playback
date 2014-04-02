@@ -53,21 +53,10 @@
   }
 
   Player.prototype = {
-
     /**
      * This is the maximum amount of elapsed time between the last measurement and the current frame
      */
     MAX_ACCEPTABLE_REPORTED_DELTA: 500,
-
-    stop: function () {
-      this.state = 'idle';
-      this.suppressDeviceFrames = false;
-    },
-
-    add: function (frame) {
-      this._current_frame(frame);
-      this._advance();
-    },
 
     // pushes a new frame on to frame data, or returns the latest frame
     _current_frame: function (frame) {
@@ -83,6 +72,7 @@
     _advance: function () {
       this._frame_data_index += 1;
       this._frame_data_index = this._frame_data_index % this.rightCropPosition;
+      if (this._frame_data_index == 500){debugger}
       if ((this._frame_data_index < this.leftCropPosition)) {
         this._frame_data_index = this.leftCropPosition;
         if (this.state == 'recording') {
@@ -105,10 +95,61 @@
       return true
     },
 
+    // returns false unless sections are defined
+    // returns true and sends a frame for the first possible section
+    sendCurrentSectionFrame: function () {
+      if (!this.scrollSections) return false;
+      var section;
+
+      for (var i = 0; i < this.scrollSections.length; i++) {
+        section = this.scrollSections[i];
+        section.completion = (window.innerHeight + document.body.scrollTop - section.element.offsetTop) / section.element.offsetHeight;
+        if (section.completion > 0 && section.completion < 1) {
+          this.setSectionPosition(section);
+          return true
+        }
+      }
+      return true
+    },
+
+    stop: function () {
+      console.log('calling stop');
+      this.setFrames({frames: []});
+      this.state = 'idle';
+      this.suppressDeviceFrames = false;
+    },
+
     pause: function () {
       this.state = 'idle';
       this.suppressDeviceFrames = true;
       if (this.overlay) this.hideOverlay();
+    },
+
+    // switches to record mode, which will be begin capturing data when a hand enters the frame,
+    // and stop when a hand leaves
+    // Todo: replace _frame_data with a full fledged recording, including metadata.
+    record: function(){
+      this.stop();
+      this._frame_data = [];
+      this._frame_data_index = 0;
+      this.state = 'recording';
+      this.suppressDeviceFrames = false;
+      this.showOverlay();
+    },
+
+    recordPending: function(){
+      return this.state == 'recording' && this._frame_data.length == 0
+    },
+
+    recording: function(){
+      return this.state == 'recording' && this._frame_data.length != 0
+    },
+
+    finishRecording: function(){
+      this.state = 'idle';
+      console.log('recording finished', this._frame_data.length);
+      this.setFrames({frames: this._frame_data})
+      this.controller.emit('playback.recordingFinished', this)
     },
 
     setFrames: function (recording) {
@@ -138,10 +179,10 @@
         this.sendFrame(section.recording.frames[frameIndex]);
       }
     },
-    
+
     setFrameIndex: function(frameIndex){
       if (frameIndex != this._frame_data_index){
-        this._frame_data_index = frameIndex;
+        this._frame_data_index = frameIndex % this.maxFrames;
         this.sendFrame(this._current_frame());
       }
     },
@@ -156,23 +197,6 @@
       this.rightCropPosition = this._frame_data_index
     },
 
-    // returns false unless sections are defined
-    // returns true and sends a frame for the first possible section
-    sendCurrentSectionFrame: function () {
-      if (!this.scrollSections) return false;
-      var section;
-
-      for (var i = 0; i < this.scrollSections.length; i++) {
-        section = this.scrollSections[i];
-        section.completion = (window.innerHeight + document.body.scrollTop - section.element.offsetTop) / section.element.offsetHeight;
-        if (section.completion > 0 && section.completion < 1) {
-          this.setSectionPosition(section);
-          return true
-        }
-      }
-      return true
-    },
-
     /* Plays back the provided frame data
      * Params {object|boolean}:
      *  - frames: previously recorded frame json
@@ -181,6 +205,7 @@
     play: function (options) {
       if (this.state == 'playing') return;
       if (this.loading == true) return;
+
       this.state = 'playing';
       this.suppressDeviceFrames = true;
       if (options === undefined) {
@@ -233,32 +258,6 @@
       requestAnimationFrame(_play);
     },
 
-    // switches to record mode, which will be begin capturing data when a hand enters the frame,
-    // and stop when a hand leaves
-    // Todo: replace _frame_data with a full fledged recording, including metadata.
-    record: function(){
-      this.stop();
-      this._frame_data = [];
-      this._frame_data_index = 0;
-      this.state = 'recording';
-      this.suppressDeviceFrames = false;
-      this.showOverlay();
-    },
-
-    recordPending: function(){
-      return this.state == 'recording' && this._frame_data.length == 0
-    },
-
-    recording: function(){
-      return this.state == 'recording' && this._frame_data.length != 0
-    },
-
-    finishRecording: function(){
-      this.stop()
-      this.setFrames({frames: this._frame_data})
-      this.controller.emit('playback.recordingFinished', this)
-    },
-
     // optional callback once frames are loaded, will have a context of player
     // replaces the contents of recordingOrURL in-place when the AJAX has completed.
     loadFrameData: function (options, callback) {
@@ -285,7 +284,6 @@
                 options.recording = JSON.parse(options.recording);
 
                 player.loading = false;
-
                 if (callback) {
                   callback.call(player, options.recording);
                 }
@@ -329,7 +327,8 @@
                 formatVersion: 0.1,
                 generatedBy: 'LeapJS Playback 0.1-pre',
                 frames: this.rightCropPosition - this.leftCropPosition,
-                leapVersion: '2.0.0+13819'
+                leapVersion: undefined,
+                protocolVersion: this.controller.connection.opts.requestProtocolVersion
               }
             }
     },
