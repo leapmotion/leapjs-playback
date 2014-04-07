@@ -112,8 +112,11 @@
 
 
 <div id="controls" ng-app="Recorder" data-ng-controller="Controls">
-  <div id="range" pin-handle="{{pinHandle}}" range-slider min="0" max="maxFrames()" model-min="leftHandlePosition" model-max="rightHandlePosition" ng-show="mode == 'crop' || mode == 'playback'"></div>
-  <!--<a href="#">Save As</a>-->
+  <div id="range"
+       pin-handle="{{pinHandle}}"
+       range-slider min="0" max="maxFrames()" model-min="leftHandlePosition" model-max="rightHandlePosition"
+       ng-show="mode == 'crop' || mode == 'playback'"></div>
+
   <div class="btn-group btn-group-lg dropup" data-toggle="buttons">
 
     <button type="button" class="btn btn-default" ng-click="record()" ng-class="{active: mode=='record'}" id="record">
@@ -128,6 +131,7 @@
       <span ng-show="player().loading" us-spinner="{radius:4, width:2, length: 4, left: '20px'}" style="width: 18px; display: inline-block;"></span>
       <span ng-show="!player().loading && !pauseOnPlaybackButtonClick()">&#9654;</span> <span ng-show="!player().loading && pauseOnPlaybackButtonClick()"><i class="glyphicon glyphicon-pause"></i> </span>Playback
     </button>
+
     <!--
     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
       <span class="caret"></span>

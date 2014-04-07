@@ -16,13 +16,14 @@
    */
   function Player(controller, options) {
     var player = this;
-    this._frame_data = [];
+    this.frameData = [];
     this.maxFrames = 10000;
     this.options = options;
-    this._frame_data_index = 0;
+    this.frameIndex = 0;
     this.controller = controller;
     this.scrollSections = this.options.scrollSections;
     this.loading = false;
+    this.setupLoops();
     this.controller.connection.on('ready', function(){
       player.setupProtocols();
     });
@@ -40,7 +41,7 @@
 
       if (options.recording) {
         this.loadFrameData(options, function(){
-          // initializes _frame_data_index and stuff
+          // initializes frameIndex and stuff
           this.setFrames(options.recording);
           options.onReady.call(this);
         })
@@ -56,6 +57,36 @@
   }
 
   Player.prototype = {
+    setupLoops: function () {
+      var player = this;
+
+      // Loop with explicit frame timing
+      this.stepFrameLoop = function () {
+        if (player.state != 'playing') return;
+        player.sendFrame(player.currentFrame());
+
+        if (!player.options.loop && (player.currentFrameIndex > player.frameIndex)) {
+          player.pause();
+        }
+
+        setTimeout(
+          player.stepFrameLoop,
+          player.timeToNextFrame()
+        );
+
+        player.advanceFrame();
+      }
+
+      // Loop with frames timed to animation frames
+      // Used with scroll sections
+      this.stepAnimationLoop = function () {
+        if (player.state != 'playing') return;
+        player.sendCurrentSectionFrame();
+
+        requestAnimationFrame(player.stepAnimationLoop);
+      }
+    },
+    
     // This is how we intercept frame data early
     // By hooking in before Frame creation, we get data exactly as the frame sends it.
     setupProtocols: function () {
@@ -98,27 +129,37 @@
       }
     },
 
-    // pushes a new frame on to frame data, or returns the latest frame
-    _current_frame: function (frame) {
-      if (frame) {
-        this._frame_data[this._frame_data_index] = [frame, new Date().getTime()];
-        return frame;
-      } else {
-        return this._frame_data[this._frame_data_index];
+    currentFrame: function () {
+      return this.frameData[this.frameIndex];
+    },
+    
+    nextFrame: function(){
+      var frameIndex = this.frameIndex + 1;
+      // || 1 to prevent `mod 0` error when finishing recording before setFrames has been called.
+      frameIndex = frameIndex % (this.rightCropPosition || 1);
+      if ((frameIndex < this.leftCropPosition)) {
+        frameIndex = this.leftCropPosition;
+      }
+      return this.frameData[frameIndex];
+    },
+
+    advanceFrame: function () {
+      this.frameIndex += 1;
+      this.frameIndex = this.frameIndex % (this.rightCropPosition || 1);
+      if ((this.frameIndex < this.leftCropPosition)) {
+        this.frameIndex = this.leftCropPosition;
       }
     },
 
-
-    _advance: function () {
-      this._frame_data_index += 1;
-      this._frame_data_index = this._frame_data_index % this.rightCropPosition;
-      if ((this._frame_data_index < this.leftCropPosition)) {
-        this._frame_data_index = this.leftCropPosition;
-        if (this.state == 'recording') {
-          this.emit('maxFrames');
-        }
+    // returns ms
+    timeToNextFrame: function(){
+      var elapsedTime = (this.nextFrame().timestamp - this.currentFrame().timestamp)  / 1000;
+      if (elapsedTime < 0){
+        elapsedTime = 50; //arbitrary pause at slightly less than 30 fps.
       }
+      return elapsedTime;
     },
+
 
     // Adds playback = true to artificial frames
     sendFrame: function (frameData) {
@@ -129,7 +170,7 @@
       // send a deviceFrame to the controller:
       // this frame gets picked up by the controllers own animation loop.
       this.controller.processFrame(frame);
-      this.currentFrameIndex = this._frame_data_index;
+      this.currentFrameIndex = this.frameIndex;
       return true
     },
 
@@ -171,36 +212,36 @@
 
     // switches to record mode, which will be begin capturing data when a hand enters the frame,
     // and stop when a hand leaves
-    // Todo: replace _frame_data with a full fledged recording, including metadata.
+    // Todo: replace frameData with a full fledged recording, including metadata.
     record: function(){
       this.stop();
-      this._frame_data = [];
-      this._frame_data_index = 0;
+      this.frameData = [];
+      this.frameIndex = 0;
       this.state = 'recording';
       this.controller.connection.protocol = this.recordProtocol;
       this.setGraphic('connect');
     },
 
     recordPending: function(){
-      return this.state == 'recording' && this._frame_data.length == 0
+      return this.state == 'recording' && this.frameData.length == 0
     },
 
     recording: function(){
-      return this.state == 'recording' && this._frame_data.length != 0
+      return this.state == 'recording' && this.frameData.length != 0
     },
 
     finishRecording: function(){
       // By doing play + pause, we change to the playbackHandler which suppresses frames:
       this.play();
       this.pause();
-      this.setFrames({frames: this._frame_data});
+      this.setFrames({frames: this.frameData});
       this.controller.emit('playback.recordingFinished', this)
     },
 
     setFrames: function (recording) {
       if (recording.frames) {
-        this._frame_data = recording.frames;
-        this._frame_data_index = 0;
+        this.frameData = recording.frames;
+        this.frameIndex = 0;
         this.maxFrames = recording.frames.length;
         this.leftCropPosition = 0;
         this.rightCropPosition = this.maxFrames;
@@ -208,7 +249,7 @@
     },
 
     loaded: function(){
-      return this._frame_data && this._frame_data.length
+      return this.frameData && this.frameData.length
     },
 
     // sets the current frame based upon fractional completion, where 0 is the first frame and 1 is the last
@@ -226,20 +267,20 @@
     },
 
     setFrameIndex: function(frameIndex){
-      if (frameIndex != this._frame_data_index){
-        this._frame_data_index = frameIndex % this.maxFrames;
-        this.sendFrame(this._current_frame());
+      if (frameIndex != this.frameIndex){
+        this.frameIndex = frameIndex % this.maxFrames;
+        this.sendFrame(this.currentFrame());
       }
     },
 
     // sets the crop-point of the current recording to the current position.
     leftCrop: function(){
-      this.leftCropPosition = this._frame_data_index
+      this.leftCropPosition = this.frameIndex
     },
 
     // sets the crop-point of the current recording to the current position.
     rightCrop: function(){
-      this.rightCropPosition = this._frame_data_index
+      this.rightCropPosition = this.frameIndex
     },
 
     /* Plays back the provided frame data
@@ -270,7 +311,6 @@
       if (this.overlay && this.pauseOnHand) this.setGraphic('connect');
       var player = this;
 
-
       // prevent the normal controller response while playing
       this.controller.connection.removeAllListeners('frame');
       this.controller.connection.on('frame', function (frame) {
@@ -289,18 +329,13 @@
         player.controller.processFrame(frame);
       });
 
-      function _play() {
-        if (player.state != 'playing') return;
-        player.sendCurrentSectionFrame() || (player.sendFrame(player._current_frame()) && player._advance());
+      // Kick off
+      if (this.scrollSections){
+        this.stepAnimationLoop();
+      }else{
+        this.stepFrameLoop();
+      }
 
-        if (!player.options.loop && (player.currentFrameIndex > player._frame_data_index)) {
-          player.state = 'idle';
-        } else {
-          requestAnimationFrame(_play);
-        }
-      };
-
-      requestAnimationFrame(_play);
     },
 
     // this method replaces connection.handleData when in record mode
@@ -309,9 +344,9 @@
       // Would be better to check controller.streaming() in showOverlay, but that method doesn't exist, yet.
       this.setGraphic('wave');
       if (frameData.hands.length > 0){
-        this._frame_data.push(frameData)
+        this.frameData.push(frameData)
         this.hideOverlay()
-      } else if ( this._frame_data.length > 0){
+      } else if ( this.frameData.length > 0){
         this.finishRecording()
       }
     },
@@ -390,7 +425,7 @@
 
     // returns frames without any circular references
     croppedFrameData: function(){
-      return this._frame_data.slice(this.leftCropPosition, this.rightCropPosition);
+      return this.frameData.slice(this.leftCropPosition, this.rightCropPosition);
     },
 
     toHash: function(){
@@ -486,7 +521,7 @@
       if (autoPlay) {
         controller.on('deviceConnected', function () {
           scope.player.pause();
-          scope.setGraphic('wave');
+          scope.player.setGraphic('wave');
         });
 
         controller.on('deviceDisconnected', function () {
@@ -494,7 +529,7 @@
         });
       }
       controller.on('deviceDisconnected', function () {
-        scope.setGraphic('connect');
+        scope.player.setGraphic('connect');
       });
     }
 

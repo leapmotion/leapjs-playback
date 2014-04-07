@@ -71,7 +71,7 @@
         }, 0);
         player().pause();
         return setTimeout(function() {
-          return player().sendFrame(player()._current_frame());
+          return player().sendFrame(player().currentFrame());
         }, 0);
       };
       $scope.stopOnRecordButtonClick = function() {
@@ -149,7 +149,7 @@
         $scope.$apply(function() {
           if ($scope.mode === 'playback') {
             $scope.leftHandlePosition = player().leftCropPosition;
-            return $scope.rightHandlePosition = player()._frame_data_index;
+            return $scope.rightHandlePosition = player().frameIndex;
           }
         });
         return $scope.inDigestLoop = false;

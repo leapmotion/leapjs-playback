@@ -58,7 +58,7 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
     player().pause()
     # this hack previews the current hand position
     setTimeout(->
-      player().sendFrame(player()._current_frame())
+      player().sendFrame(player().currentFrame())
     , 0)
 
   $scope.stopOnRecordButtonClick = ->
@@ -129,7 +129,7 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
     $scope.$apply ->
       if $scope.mode == 'playback'
         $scope.leftHandlePosition = player().leftCropPosition
-        $scope.rightHandlePosition = player()._frame_data_index
+        $scope.rightHandlePosition = player().frameIndex
     $scope.inDigestLoop = false
 
 
