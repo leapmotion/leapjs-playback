@@ -138,7 +138,7 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
     if format == 'json'
       saveAs(new Blob([player().export('json')], {type: "text/JSON;charset=utf-8"}), "#{filename}.json")
     else
-      saveAs(new Blob([player().export('lz')], {type: "text/JSON;charset=utf-8"}), "#{filename}.lz")
+      saveAs(new Blob([player().export('lz')], {type: "text/JSON;charset=utf-8"}), "#{filename}.json.lz")
 
   if player().loading then $scope.playback() else $scope.record()
 ]

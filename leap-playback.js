@@ -15,6 +15,7 @@
    * @constructor
    */
   function Player(controller, options) {
+    var player = this;
     this._frame_data = [];
     this.maxFrames = 10000;
     this.options = options;
@@ -22,7 +23,9 @@
     this.controller = controller;
     this.scrollSections = this.options.scrollSections;
     this.loading = false;
-    this.suppressDeviceFrames = false;
+    this.controller.connection.on('ready', function(){
+      player.setupProtocols();
+    });
 
     if (options) {
       if (!isNaN(options)) {
@@ -53,10 +56,47 @@
   }
 
   Player.prototype = {
-    /**
-     * This is the maximum amount of elapsed time between the last measurement and the current frame
-     */
-    MAX_ACCEPTABLE_REPORTED_DELTA: 500,
+    // This is how we intercept frame data early
+    // By hooking in before Frame creation, we get data exactly as the frame sends it.
+    setupProtocols: function () {
+      var player = this;
+      // This is the original normal protocol, used while in record mode but not recording.
+      this.stopProtocol = this.controller.connection.protocol;
+
+      // This consumes all frame data, making the device act as if not streaming
+      this.playbackProtocol = function (data) {
+        // The old protocol still needs to emit events, so we use it, but intercept Frames
+        var eventOrFrame = player.stopProtocol(data);
+        if (eventOrFrame instanceof Leap.Frame) {
+          return {type: 'playback'}
+        }else{
+          return eventOrFrame;
+        }
+      };
+
+      // This pushes frame data, and watches for hands to auto change state.
+      // Returns the eventOrFrame without modifying it.
+      this.recordProtocol = function (data) {
+        var eventOrFrame = player.stopProtocol(data);
+        if (eventOrFrame instanceof Leap.Frame) {
+          player.recordFrameHandler(data);
+        }
+        return eventOrFrame;
+      };
+
+      // Copy methods/properties from the default protocol over
+      for (var property in this.stopProtocol) {
+        if (this.stopProtocol.hasOwnProperty(property)) {
+          this.playbackProtocol[property] = this.stopProtocol[property]
+          this.recordProtocol[property] = this.stopProtocol[property]
+        }
+      }
+
+      // todo: this is messy. Should cover all cases, not just active playback!
+      if (this.state == 'playing'){
+        this.controller.connection.protocol = this.playbackProtocol
+      }
+    },
 
     // pushes a new frame on to frame data, or returns the latest frame
     _current_frame: function (frame) {
@@ -72,7 +112,6 @@
     _advance: function () {
       this._frame_data_index += 1;
       this._frame_data_index = this._frame_data_index % this.rightCropPosition;
-      if (this._frame_data_index == 500){debugger}
       if ((this._frame_data_index < this.leftCropPosition)) {
         this._frame_data_index = this.leftCropPosition;
         if (this.state == 'recording') {
@@ -86,7 +125,6 @@
       if (!frameData) throw "Frame data not provided";
       // note that currently frame json is sent as nested arrays, unnecessarily.  That should be fixed.
       var frame = new Leap.Frame(frameData);
-      frame.playback = true;
 
       // send a deviceFrame to the controller:
       // this frame gets picked up by the controllers own animation loop.
@@ -112,17 +150,23 @@
       return true
     },
 
+    // used after record
     stop: function () {
-      console.log('calling stop');
       this.setFrames({frames: []});
-      this.state = 'idle';
-      this.suppressDeviceFrames = false;
+      this.idle();
     },
 
+    // used after play
     pause: function () {
+      // todo: we should change this idle state to paused or leave it as playback with a pause flag
+      // state should corrospond always to protocol handler (through a setter)?
       this.state = 'idle';
-      this.suppressDeviceFrames = true;
       if (this.overlay) this.hideOverlay();
+    },
+
+    idle: function(){
+      this.state = 'idle';
+      this.controller.connection.protocol = this.stopProtocol;
     },
 
     // switches to record mode, which will be begin capturing data when a hand enters the frame,
@@ -133,8 +177,8 @@
       this._frame_data = [];
       this._frame_data_index = 0;
       this.state = 'recording';
-      this.suppressDeviceFrames = false;
-      this.showOverlay();
+      this.controller.connection.protocol = this.recordProtocol;
+      this.setGraphic('connect');
     },
 
     recordPending: function(){
@@ -146,8 +190,10 @@
     },
 
     finishRecording: function(){
-      this.state = 'idle';
-      this.setFrames({frames: this._frame_data})
+      // By doing play + pause, we change to the playbackHandler which suppresses frames:
+      this.play();
+      this.pause();
+      this.setFrames({frames: this._frame_data});
       this.controller.emit('playback.recordingFinished', this)
     },
 
@@ -206,7 +252,7 @@
       if (this.loading == true) return;
 
       this.state = 'playing';
-      this.suppressDeviceFrames = true;
+      this.controller.connection.protocol = this.playbackProtocol;
       if (options === undefined) {
         options = true;
       }
@@ -221,15 +267,13 @@
 
       this.options = options;
       this.state = 'playing';
-      if (this.overlay && this.pauseOnHand) this.showOverlay();
+      if (this.overlay && this.pauseOnHand) this.setGraphic('connect');
       var player = this;
 
 
       // prevent the normal controller response while playing
       this.controller.connection.removeAllListeners('frame');
       this.controller.connection.on('frame', function (frame) {
-        if (player.suppressDeviceFrames) return;
-
         if (player.state == 'playing') {
           if (player.pauseOnHand && frame.hands.length > 0) {
             player.pause();
@@ -237,9 +281,11 @@
             return
           }
         }
-        if (player.state == 'idle' && frame.hands.length == 0) {
+
+        if (player.autoPlay && player.state == 'idle' && frame.hands.length == 0) {
           player.play();
         }
+
         player.controller.processFrame(frame);
       });
 
@@ -255,6 +301,19 @@
       };
 
       requestAnimationFrame(_play);
+    },
+
+    // this method replaces connection.handleData when in record mode
+    // It accepts the raw connection data which is used to make a frame.
+    recordFrameHandler: function(frameData){
+      // Would be better to check controller.streaming() in showOverlay, but that method doesn't exist, yet.
+      this.setGraphic('wave');
+      if (frameData.hands.length > 0){
+        this._frame_data.push(frameData)
+        this.hideOverlay()
+      } else if ( this._frame_data.length > 0){
+        this.finishRecording()
+      }
     },
 
     // optional callback once frames are loaded, will have a context of player
@@ -303,33 +362,35 @@
       }
     },
 
-    showOverlay: function () {
-      if (this.overlay){
-        this.overlay.style.display = 'block';
-        this.overlay.innerHTML = CONNECT_LEAP_ICON;
-      }
-    },
 
     hideOverlay: function () {
       this.overlay.style.display = 'none';
-      this.overlay.innerHTML = '';
+    },
+
+
+    // Accepts either "connect", "wave", or undefined.
+    setGraphic: function(graphicName){
+      if (this.graphicName != graphicName){
+        this.graphicName = graphicName;
+        switch(graphicName) {
+          case 'connect':
+            this.overlay.style.display = 'block';
+            this.overlay.innerHTML = CONNECT_LEAP_ICON;
+            break;
+          case 'wave':
+            this.overlay.style.display = 'block';
+            this.overlay.innerHTML = MOVE_HAND_OVER_LEAP_ICON;
+            break;
+          case undefined:
+            this.overlay.innerHTML = '';
+            break;
+        }
+      }
     },
 
     // returns frames without any circular references
     croppedFrameData: function(){
-      var frames = this._frame_data.slice(this.leftCropPosition, this.rightCropPosition),
-        frame;
-      for (var i = 0; i < frames.length; i++){
-        frame = frames[i];
-        delete frame.controller;
-        for(var j = 0; j < frame.hands.length; j++){
-          delete frame.hands[j].frame;
-        }
-        for (j = 0; j < frame.pointables.length; j++){
-          delete  frame.pointables[j].frame
-        }
-      }
-      return frames;
+      return this._frame_data.slice(this.leftCropPosition, this.rightCropPosition);
     },
 
     toHash: function(){
@@ -339,7 +400,7 @@
                 formatVersion: 0.1,
                 generatedBy: 'LeapJS Playback 0.1-pre',
                 frames: this.rightCropPosition - this.leftCropPosition,
-                leapVersion: undefined,
+                leapServiceVersion: this.controller.connection.protocol.serviceVersion,
                 protocolVersion: this.controller.connection.opts.requestProtocolVersion
               }
             }
@@ -366,16 +427,16 @@
   // will only play back if device is disconnected
   // Accepts options:
   // - frames: [string] URL of .json frame data
-  // - onlyWhenDisconnected: [boolean true] Whether to turn on and off playback based off of connection state
+  // - autoPlay: [boolean true] Whether to turn on and off playback based off of connection state
   // - overlay: [boolean or DOM element] Whether or not to show the overlay: "Connect your Leap Motion Controller"
   //            if a DOM element is passed, that will be shown/hidden instead of the default message.
   // - pauseOnHand: [boolean true] Whether to stop playback when a hand is in field of view
   // - requiredProtocolVersion: clients connected with a lower protocol number will not be able to take control of the
-  // controller with their device.  This option, if set, ovverrides onlyWhenDisconnected
+  // controller with their device.  This option, if set, ovverrides autoPlay
   var playback = function (scope) {
     var controller = this;
-    var onlyWhenDisconnected = scope.onlyWhenDisconnected;
-    if (onlyWhenDisconnected === undefined) onlyWhenDisconnected = true;
+    var autoPlay = scope.autoPlay;
+    if (autoPlay === undefined) autoPlay = true;
 
     var pauseOnHand = scope.pauseOnHand;
     if (pauseOnHand === undefined) pauseOnHand = false;
@@ -402,7 +463,7 @@
       recording: scope.recording,
       scrollSections: scope.scrollSections,
       onReady: function () {
-        if (onlyWhenDisconnected && (controller.streamingCount == 0 || pauseOnHand)) {
+        if (autoPlay && (controller.streamingCount == 0 || pauseOnHand)) {
           this.play();
         }
       }
@@ -413,7 +474,7 @@
     scope.player.overlay = overlay;
     scope.player.pauseOnHand = pauseOnHand;
     scope.player.requiredProtocolVersion = requiredProtocolVersion;
-
+    scope.player.autoPlay = autoPlay;
 
     var setupStreamingEvents = function(){
       if (controller.connection.opts.requestProtocolVersion < scope.requiredProtocolVersion){
@@ -422,10 +483,10 @@
         return
       }
 
-      if (onlyWhenDisconnected) {
+      if (autoPlay) {
         controller.on('deviceConnected', function () {
           scope.player.pause();
-          scope.overlay.innerHTML = MOVE_HAND_OVER_LEAP_ICON;
+          scope.setGraphic('wave');
         });
 
         controller.on('deviceDisconnected', function () {
@@ -433,7 +494,7 @@
         });
       }
       controller.on('deviceDisconnected', function () {
-        overlay.innerHTML = CONNECT_LEAP_ICON;
+        scope.setGraphic('connect');
       });
     }
 
@@ -446,20 +507,7 @@
     }
 
 
-    return {
-      frame: function (frame) {
-        if (scope.player.state == 'recording' && !frame.playback) {
-          // Would be better to check controller.streaming() in showOverlay, but that method doesn't exist, yet.
-          overlay.innerHTML = MOVE_HAND_OVER_LEAP_ICON;
-          if (frame.hands.length > 0){
-            scope.player._frame_data.push(frame)
-            scope.player.hideOverlay()
-          } else if ( scope.player._frame_data.length > 0){
-            scope.player.finishRecording()
-          }
-        }
-      }
-    }
+    return {}
   }
 
 

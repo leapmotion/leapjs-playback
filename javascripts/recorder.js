@@ -164,7 +164,7 @@
         } else {
           return saveAs(new Blob([player()["export"]('lz')], {
             type: "text/JSON;charset=utf-8"
-          }), "" + filename + ".lz");
+          }), "" + filename + ".json.lz");
         }
       };
       if (player().loading) {
