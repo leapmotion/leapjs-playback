@@ -43,6 +43,7 @@
         this.loadFrameData(options, function(){
           // initializes frameIndex and stuff
           this.setFrames(options.recording);
+          this.metadata = options.recording.metadata;
           options.onReady.call(this);
         })
       }
@@ -351,6 +352,9 @@
       }
     },
 
+
+    // IO
+
     // optional callback once frames are loaded, will have a context of player
     // replaces the contents of recordingOrURL in-place when the AJAX has completed.
     loadFrameData: function (options, callback) {
@@ -397,6 +401,7 @@
       }
     },
 
+    // INTERFACE
 
     hideOverlay: function () {
       this.overlay.style.display = 'none';
@@ -423,6 +428,24 @@
       }
     },
 
+
+    // EXPORTING
+
+    // removes every other frame from the array
+    // Accepts an optional `factor` integer, which is the number of frames
+    // discarded for every frame kept.
+    cullFrames: function (factor) {
+      factor || (factor = 1);
+      for (var i = 0; i < this.frameData.length; i++) {
+        this.frameData.splice(i + factor, 1);
+      }
+    },
+
+    // Returns the average frame rate of the recording
+    frameRate: function(){
+      return this.frameData.length / (this.frameData[this.frameData.length - 1].timestamp - this.frameData[0].timestamp) * 1000000;
+    },
+
     // returns frames without any circular references
     croppedFrameData: function(){
       return this.frameData.slice(this.leftCropPosition, this.rightCropPosition);
@@ -436,7 +459,8 @@
                 generatedBy: 'LeapJS Playback 0.1-pre',
                 frames: this.rightCropPosition - this.leftCropPosition,
                 leapServiceVersion: this.controller.connection.protocol.serviceVersion,
-                protocolVersion: this.controller.connection.opts.requestProtocolVersion
+                protocolVersion: this.controller.connection.opts.requestProtocolVersion,
+                frameRate: this.frameRate()
               }
             }
     },

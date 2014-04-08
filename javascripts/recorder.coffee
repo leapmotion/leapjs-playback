@@ -67,6 +67,9 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
   $scope.pauseOnPlaybackButtonClick = ->
     $scope.mode == 'playback' && !$scope.paused
 
+  $scope.metadata = ->
+    player().metadata
+
   window.controller.on 'playback.ajax:begin', (player)->
     $scope.playback()
     $scope.$apply()
@@ -118,8 +121,11 @@ recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $l
         $scope.save()
       when 47, 63
         $('#helpModal').modal('show')
-      when 27
+      when 27 # esc
         $('#helpModal').modal('hide')
+        $('#metadata').modal('hide')
+      when 109
+        $('#metadata').modal('toggle')
       else
         console.log "unbound keycode: #{e.which}"
 

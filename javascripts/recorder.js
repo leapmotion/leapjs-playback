@@ -80,6 +80,9 @@
       $scope.pauseOnPlaybackButtonClick = function() {
         return $scope.mode === 'playback' && !$scope.paused;
       };
+      $scope.metadata = function() {
+        return player().metadata;
+      };
       window.controller.on('playback.ajax:begin', function(player) {
         $scope.playback();
         return $scope.$apply();
@@ -139,7 +142,10 @@
           case 63:
             return $('#helpModal').modal('show');
           case 27:
-            return $('#helpModal').modal('hide');
+            $('#helpModal').modal('hide');
+            return $('#metadata').modal('hide');
+          case 109:
+            return $('#metadata').modal('toggle');
           default:
             return console.log("unbound keycode: " + e.which);
         }
