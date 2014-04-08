@@ -1,7 +1,7 @@
 <html>
 <head>
   <script src="javascripts/lib/three.min.js"></script>
-  <script src="javascripts/lib/leap-skeleton-deviceEvents.js"></script>
+  <script src="//js.leapmotion.com/leap-0.6.0-beta1.js"></script>
   <script src="javascripts/lib/leap-plugins-0.1.4-pre.js"></script>
   <script src="javascripts/lib/leap.rigged-hand-0.1.0.min.js"></script>
   <script src="leap-playback-0.1.js"></script>
@@ -22,10 +22,9 @@
 
 
 <script>
-  (window.controller = new Leap.Controller)
-    .use('playback', {recording: 'recordings/brian.json.lz', requiredProtocolVersion: 6, pauseOnHand: true})
+  Leap.loop({useAllPlugins: false}, function(frame){
+  }).use('playback', {recording: 'recordings/pinch.json.lz', requiredProtocolVersion: 6, pauseOnHand: true, loop: false})
     .use('riggedHand')
-    .connect()
 </script>
 
 </body>
