@@ -460,7 +460,7 @@
                 frames: this.rightCropPosition - this.leftCropPosition,
                 leapServiceVersion: this.controller.connection.protocol.serviceVersion,
                 protocolVersion: this.controller.connection.opts.requestProtocolVersion,
-                frameRate: this.frameRate()
+                frameRate: this.frameRate().toPrecision(2)
               }
             }
     },
