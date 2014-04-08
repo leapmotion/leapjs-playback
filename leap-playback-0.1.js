@@ -451,17 +451,25 @@
       return this.frameData.slice(this.leftCropPosition, this.rightCropPosition);
     },
 
+    setMetaData: function(){
+      var newMetaData = {
+        formatVersion: 0.1,
+        generatedBy: 'LeapJS Playback 0.1-pre',
+        frames: this.rightCropPosition - this.leftCropPosition,
+        protocolVersion: this.controller.connection.opts.requestProtocolVersion,
+        frameRate: this.frameRate().toPrecision(2)
+      }
+      if (this.controller.connection.protocol){
+        newMetaData.serviceVersion = this.controller.connection.protocol.serviceVersion;
+      }
+      for (var key in newMetaData) { this.metadata[key] = newMetaData[key]; }
+    },
+
     toHash: function(){
+      this.setMetaData();
       return {
               frames: this.croppedFrameData(),
-              metadata: {
-                formatVersion: 0.1,
-                generatedBy: 'LeapJS Playback 0.1-pre',
-                frames: this.rightCropPosition - this.leftCropPosition,
-                leapServiceVersion: this.controller.connection.protocol.serviceVersion,
-                protocolVersion: this.controller.connection.opts.requestProtocolVersion,
-                frameRate: this.frameRate().toPrecision(2)
-              }
+              metadata: this.metadata
             }
     },
 
@@ -473,14 +481,112 @@
 
       if (format == 'json' || !LZString) return json;
 
-      return LZString.compressToBase64(json);
+      return this.compressToBase64(json);
     },
 
     decompress: function(data){
-      return LZString.decompressFromBase64(data)
+      return this.decompressFromBase64(data)
+    },
+
+    // these compression methods yanked from LZString. Gracias WTFPL.
+    // private property
+    _keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+    _f : String.fromCharCode,
+
+    compressToBase64 : function (input) {
+      if (input == null) return "";
+      var output = "";
+      var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+      var i = 0;
+
+      input = LZString.compress(input);
+
+      while (i < input.length*2) {
+
+        if (i%2==0) {
+          chr1 = input.charCodeAt(i/2) >> 8;
+          chr2 = input.charCodeAt(i/2) & 255;
+          if (i/2+1 < input.length)
+            chr3 = input.charCodeAt(i/2+1) >> 8;
+          else
+            chr3 = NaN;
+        } else {
+          chr1 = input.charCodeAt((i-1)/2) & 255;
+          if ((i+1)/2 < input.length) {
+            chr2 = input.charCodeAt((i+1)/2) >> 8;
+            chr3 = input.charCodeAt((i+1)/2) & 255;
+          } else
+            chr2=chr3=NaN;
+        }
+        i+=3;
+
+        enc1 = chr1 >> 2;
+        enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+        enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+        enc4 = chr3 & 63;
+
+        if (isNaN(chr2)) {
+          enc3 = enc4 = 64;
+        } else if (isNaN(chr3)) {
+          enc4 = 64;
+        }
+
+        output = output +
+          LZString._keyStr.charAt(enc1) + LZString._keyStr.charAt(enc2) +
+            LZString._keyStr.charAt(enc3) + LZString._keyStr.charAt(enc4);
+
+      }
+
+      return output;
+    },
+
+    decompressFromBase64 : function (input) {
+      if (input == null) return "";
+      var output = "",
+          ol = 0,
+          output_,
+          chr1, chr2, chr3,
+          enc1, enc2, enc3, enc4,
+          i = 0, f=this._f;
+
+      input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+
+      while (i < input.length) {
+
+        enc1 = LZString._keyStr.indexOf(input.charAt(i++));
+        enc2 = LZString._keyStr.indexOf(input.charAt(i++));
+        enc3 = LZString._keyStr.indexOf(input.charAt(i++));
+        enc4 = LZString._keyStr.indexOf(input.charAt(i++));
+
+        chr1 = (enc1 << 2) | (enc2 >> 4);
+        chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+        chr3 = ((enc3 & 3) << 6) | enc4;
+
+        if (ol%2==0) {
+          output_ = chr1 << 8;
+
+          if (enc3 != 64) {
+            output += f(output_ | chr2);
+          }
+          if (enc4 != 64) {
+            output_ = chr3 << 8;
+          }
+        } else {
+          output = output + f(output_ | chr1);
+
+          if (enc3 != 64) {
+            output_ = chr2 << 8;
+          }
+          if (enc4 != 64) {
+            output += f(output_ | chr3);
+          }
+        }
+        ol+=3;
+      }
+
+      return LZString.decompress(output);
+
     }
-
-
   };
 
   // will only play back if device is disconnected
