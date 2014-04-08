@@ -155,7 +155,7 @@
     timeToNextFrame: function(){
       var elapsedTime = (this.nextFrame().timestamp - this.currentFrame().timestamp)  / 1000;
       if (elapsedTime < 0){
-        elapsedTime = 50; //arbitrary pause at slightly less than 30 fps.
+        elapsedTime = this.timeBetweenLoops; //arbitrary pause at slightly less than 30 fps.
       }
       return elapsedTime;
     },
@@ -467,6 +467,7 @@
   //            if a DOM element is passed, that will be shown/hidden instead of the default message.
   // - pauseOnHand: [boolean true] Whether to stop playback when a hand is in field of view
   // - requiredProtocolVersion: clients connected with a lower protocol number will not be able to take control of the
+  // - timeBetweenLoops: [number, ms] delay between looping playback
   // controller with their device.  This option, if set, ovverrides autoPlay
   var playback = function (scope) {
     var controller = this;
@@ -475,6 +476,9 @@
 
     var pauseOnHand = scope.pauseOnHand;
     if (pauseOnHand === undefined) pauseOnHand = false;
+
+    var timeBetweenLoops = scope.timeBetweenLoops;
+    if (timeBetweenLoops === undefined) timeBetweenLoops = 50;
 
     var requiredProtocolVersion = scope.requiredProtocolVersion;
 
@@ -510,6 +514,7 @@
     scope.player.pauseOnHand = pauseOnHand;
     scope.player.requiredProtocolVersion = requiredProtocolVersion;
     scope.player.autoPlay = autoPlay;
+    scope.player.timeBetweenLoops = timeBetweenLoops;
 
     var setupStreamingEvents = function(){
       if (controller.connection.opts.requestProtocolVersion < scope.requiredProtocolVersion){

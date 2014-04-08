@@ -14,8 +14,8 @@
         return Math.max(window.controller.plugins.playback.player.maxFrames - 1, 0);
       };
       $scope.mode = '';
-      $scope.leftHandlePosition = 0;
-      $scope.rightHandlePosition = $scope.maxFrames();
+      $scope.leftHandlePosition;
+      $scope.rightHandlePosition;
       $scope.paused = false;
       $scope.player = player;
       $scope.inDigestLoop = false;
