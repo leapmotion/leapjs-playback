@@ -1,6 +1,6 @@
 {
   "name": "leapjs-playack",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Record and Play back LEap data",
   "main": "leapjs-playback-0.1.js",
   "repository": {
@@ -8,12 +8,19 @@
     "url": "git://github.com/leapmotion/leapjs-playback.git"
   },
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/leapmotion/leapjs-playback/issues"
   },
   "homepage": "https://github.com/leapmotion/leapjs-playback",
-  "dependencies": {
-    "node-static": "~0.7.3"
+  "devDependencies": {
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-uglify": "~0.3.2",
+    "grunt-contrib-coffee": "~0.8.2",
+    "grunt-banner": "git://github.com/pehrlich/grunt-banner.git",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt": "~0.4.2",
+    "grunt-bump": "0.0.13",
+    "load-grunt-tasks": "~0.4.0"
   }
 }
