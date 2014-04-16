@@ -86,7 +86,6 @@ window.recorder.controller 'DataCollection', ['$scope', ($scope)->
   $scope.intro = ->
     player().clear();
     player().setRecording($scope.currentRecording())
-    console.log('set no play');
     $scope.mode = 'intro'
 
 

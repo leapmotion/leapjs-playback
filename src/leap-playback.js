@@ -647,7 +647,7 @@
 
 
   if ((typeof Leap !== 'undefined') && Leap.Controller) {
-    Leap.Controller.plugin('playback', playback);
+    Leap.Controller.plugin('playback-custom', playback);
   } else if (typeof module !== 'undefined') {
     module.exports.playback = playback;
   } else {

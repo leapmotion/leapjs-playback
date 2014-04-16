@@ -85,7 +85,6 @@
       $scope.intro = function() {
         player().clear();
         player().setRecording($scope.currentRecording());
-        console.log('set no play');
         return $scope.mode = 'intro';
       };
       $scope.save = function() {

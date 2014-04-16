@@ -6,5 +6,6 @@ recorder.run (editableOptions) ->
 
 # todo: Leap factory?
 window.player = ->
-  window.controller.plugins.playback.player
+
+  window.controller.plugins['playback-custom'].player
 

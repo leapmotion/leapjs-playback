@@ -1,7 +1,7 @@
 window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $location, $document)->
   $scope.maxFrames = ->
 #    console.log('max frames', window.controller.plugins.playback.player.maxFrames)
-    Math.max(window.controller.plugins.playback.player.maxFrames - 1, 0)
+    Math.max(player().maxFrames - 1, 0)
 
   $scope.mode = ''
   $scope.leftHandlePosition

@@ -2,7 +2,7 @@
   window.recorder.controller('Controls', [
     '$scope', '$location', '$document', function($scope, $location, $document) {
       $scope.maxFrames = function() {
-        return Math.max(window.controller.plugins.playback.player.maxFrames - 1, 0);
+        return Math.max(player().maxFrames - 1, 0);
       };
       $scope.mode = '';
       $scope.leftHandlePosition;

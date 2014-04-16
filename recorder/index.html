@@ -24,7 +24,8 @@
   <script src="javascripts/lib/TrackballControls.js"></script>
 
   <script src="//js.leapmotion.com/leap-0.6.0-beta1.js"></script>
-  <script src="javascripts/lib/leap-plugins-0.1.4-pre.js"></script>
+  <script src="//js.leapmotion.com/leap-plugins-0.1.4.js"></script>
+
   <script src="javascripts/lib/leap.rigged-hand-0.1.0.min.js"></script>
   <script src="../build/leap.playback-0.1.0.js"></script>
 
@@ -32,6 +33,7 @@
   <script src="javascripts/controls.js"></script>
   <script src="javascripts/data-collection.js"></script>
   <script src="javascripts/metadata.js"></script>
+
 </head>
 <body ng-app="Recorder">
 
@@ -245,7 +247,7 @@
 
 <script>
   (window.controller = new Leap.Controller)
-    .use('playback', {loop: false})
+    .use('playback-custom', {loop: false})
     .use('riggedHand')
     .connect()
 
