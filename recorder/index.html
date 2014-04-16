@@ -2,116 +2,87 @@
 <html>
 <head>
   <title>LeapJS Playback Recorder</title>
+  
   <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
-  <link href="stylesheets/angular.rangeSlider.css" rel="stylesheet">
+  <link rel="stylesheet" href="stylesheets/lib/angular.rangeSlider.css">
+  <link rel="stylesheet" href="stylesheets/main.css">
+  <link rel="stylesheet" href="stylesheets/controls.css">
+  <link rel="stylesheet" href="stylesheets/data-collection.css">
+
   <script src="javascripts/lib/jquery-2.1.0.min.js"></script>
   <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-  <script src="javascripts/lib/lz-string-1.3.3.js"></script>
   <script src="javascripts/lib/FileSaver.js"></script>
   <script src="javascripts/lib/spin.min.js"></script>
   <script src="javascripts/lib/angular.js"></script>
   <script src="javascripts/lib/angular.rangeSlider.js"></script>
   <script src="javascripts/lib/angular-spinner.min.js"></script>
-  <script src="javascripts/recorder.js"></script>
+
+  <link href="bower_components/angular-xeditable/dist/css/xeditable.css" rel="stylesheet">
+  <script src="bower_components/angular-xeditable/dist/js/xeditable.js"></script>
+
   <script src="javascripts/lib/three.min.js"></script>
   <script src="javascripts/lib/TrackballControls.js"></script>
+
   <script src="//js.leapmotion.com/leap-0.6.0-beta1.js"></script>
   <script src="javascripts/lib/leap-plugins-0.1.4-pre.js"></script>
   <script src="javascripts/lib/leap.rigged-hand-0.1.0.min.js"></script>
   <script src="../build/leap.playback-0.1.0.js"></script>
-  <style>
-    body{
-      font-family: Helvetica;
-    }
-    canvas {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-    }
-    #controls{
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      text-align: center;
-      z-index: 20;
-    }
-    .glyphicon.orange{
-      color: orange;
-      text-shadow: 0px 0px 3px orange;
-      -webkit-animation: pulsate 3s ease-in-out;
-      -webkit-animation-iteration-count: infinite;
-    }
-    .glyphicon.red{
-      color: red;
-      text-shadow: 0px 0px 3px red;
-    }
 
-    @-webkit-keyframes pulsate {
-        0% {opacity: 1.0; color: orange;}
-        50% { opacity: 0.6; color: #D98F00;}
-        100% {opacity: 1.0; color: orange;}
-    }
-
-
-    .playback-move-hand{
-      -webkit-animation: breatheDeep 2s infinite alternate;
-        -moz-animation: breatheDeep 2s infinite alternate;
-        -animation: breatheDeep 2s infinite alternate;
-    }
-
-    .playback-connect-leap{
-      -webkit-animation: breatheShallow 2s infinite alternate;
-      -moz-animation: breatheShallow 2s infinite alternate;
-      -animation: breatheShallow 2s infinite alternate;
-    }
-
-    #connect-leap {
-      margin-top: 400px !important;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -khtml-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-    }
-    @-webkit-keyframes breatheShallow {
-      from { opacity: 0.8 }
-      to { opacity: 1 }
-    }
-    @-moz-keyframes breatheShallow {
-      from { opacity: 0.8 }
-      to { opacity: 1 }
-    }
-    @keyframes breatheShallow {
-      from { opacity: 0.8 }
-      to { opacity: 1 }
-    }
-    @-webkit-keyframes breatheDeep {
-      from { opacity: 0.6 }
-      to { opacity: 1 }
-    }
-    @-moz-keyframes breatheDeep {
-      from { opacity: 0.6 }
-      to { opacity: 1 }
-    }
-    @keyframes breatheDeep {
-      from { opacity: 0.6 }
-      to { opacity: 1 }
-    }
-  </style>
-  <script type="text/javascript">
-
-
-
-  </script>
+  <script src="javascripts/recorder.js"></script>
+  <script src="javascripts/controls.js"></script>
+  <script src="javascripts/data-collection.js"></script>
+  <script src="javascripts/metadata.js"></script>
 </head>
-<body ng-app="Recorder" data-ng-controller="Controls">
+<body ng-app="Recorder">
 
+<div data-ng-controller="DataCollection" ng-show="mode != 'recording'">
 
-<div id="controls">
+  <section class="row" id="changeRecording" ng-animate="'animate'" ng-show="mode == 'intro'">
+
+    <div class="col-xs-2 changeRecordingControl">
+      <button ng-click="previous($event)" class="btn btn-default btn-double">
+        <i class="glyphicon glyphicon-chevron-left"></i>
+      </button>
+    </div>
+
+    <div class="col-xs-8">
+      <h2>{{title() || 'Untitled Recording'}}</h2>
+      <p class="recordingDescription">{{currentRecording().metadata.description}}</p>
+
+      <div class="pull-right">
+        <button class="btn btn-default" ng-click="replay($event)" ng-disabled="!canReplay()">
+          Replay
+        </button>
+        <button class="btn btn-default btn-success" ng-click="record()">
+          Make Recording
+        </button>
+      </div>
+    </div>
+
+    <div class="col-xs-2 changeRecordingControl" style="text-align: right;">
+      <button ng-click="next($event)" class="btn btn-default btn-double">
+        <i class="glyphicon glyphicon-chevron-right"></i>
+      </button>
+    </div>
+    <div class="clearfix"></div>
+  </section>
+
+  <!-- todo: leap-enable! -->
+  <section class="row" id="acceptRecording" ng-animate="'animate'" ng-show="mode == 'outro'">
+    <div class="col-xs-8 col-xs-offset-2">
+      <h2>Deliver Recording?</h2>
+      <p class="recordingDescription">
+      </p>
+      <div class="pull-right">
+        <button class="btn btn-default" ng-click="discard()">Discard</button>
+        <button class="btn btn-primary" ng-click="save()">Save & Send</button>
+      </div>
+    </div>
+  </section>
+  <hr/>
+</div>
+
+<div id="controls" data-ng-controller="Controls">
   <div id="range"
        pin-handle="{{pinHandle}}"
        range-slider min="0" max="maxFrames()" model-min="leftHandlePosition" model-max="rightHandlePosition"
@@ -127,7 +98,7 @@
       <span style="margin-top: -2px; display: inline-block; vertical-align: top;">[ ]</span> Crop
     </button>
 
-    <button style="text-align: left" type="button" class="btn btn-default" ng-click="playback()" ng-class="{active: mode=='playback'}" ng-disabled="!player().loaded()">
+    <button style="text-align: left" type="button" class="btn btn-default" ng-click="playback()" ng-class="{active: mode=='playback'}" ng-disabled="canPlayBack()">
       <span ng-show="player().loading" us-spinner="{radius:4, width:2, length: 4, left: '20px'}" style="width: 18px; display: inline-block;"></span>
       <span ng-show="!player().loading && !pauseOnPlaybackButtonClick()">&#9654;</span> <span ng-show="!player().loading && pauseOnPlaybackButtonClick()"><i class="glyphicon glyphicon-pause"></i> </span>Playback
     </button>
@@ -158,7 +129,7 @@
 </div>
 
 
-<div class="modal fade" id="helpModal">
+<div class="modal fade" id="helpModal" ng-keypress="stripKeycodes($event)">
   <div class="modal-dialog">
     <div class="modal-content">
       <!-- https://github.com/blog/273-github-ribbons -->
@@ -213,7 +184,7 @@
 </div>
 
 
-<div class="modal fade" id="metadata">
+<div class="modal fade" id="metadata" data-ng-controller="Metadata" ng-keypress="$event.stopPropagation()">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -222,9 +193,46 @@
       </div>
       <div class="modal-body">
           <table>
-            <tr ng-repeat="(key, value) in metadata()">
-              <td>{{key}}</td>
-              <td>{{value}}</td>
+
+            <tr>
+              <td>title</td>
+              <td>
+                <a href="#" editable-text="metadata.title">
+                  {{metadata.title || 'Edit'}}
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td>description</td>
+              <td>
+                <a href="#" editable-textarea="metadata.description" e-rows="2" e-cols="40">
+                  {{metadata.description || 'Edit'}}
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td>formatVersion</td>
+              <td>{{metadata.formatVersion}}</td>
+            </tr>
+            <tr>
+              <td>frameRate</td>
+              <td>{{metadata.frameRate}}</td>
+            </tr>
+            <tr>
+              <td>frames</td>
+              <td>{{metadata.frames}}</td>
+            </tr>
+            <tr>
+              <td>generatedBy</td>
+              <td>{{metadata.generatedBy}}</td>
+            </tr>
+            <tr>
+              <td>protocolVersion</td>
+              <td>{{metadata.protocolVersion}}</td>
+            </tr>
+            <tr>
+              <td>url</td>
+              <td>{{metadata.url}}</td>
             </tr>
           </table>
       </div>
@@ -237,7 +245,7 @@
 
 <script>
   (window.controller = new Leap.Controller)
-    .use('playback', {recording: 'recordings/pinch-half-res.json.lz', autoPlay: false, timeBetweenLoops: 1000})
+    .use('playback', {loop: false})
     .use('riggedHand')
     .connect()
 

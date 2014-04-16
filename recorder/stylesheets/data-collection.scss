@@ -1,0 +1,33 @@
+[data-ng-controller=DataCollection] {
+
+  position: fixed;
+  z-index: 20;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding-top: 40px;
+  background: white;
+
+  section{
+    width: 700px;
+    margin: auto;
+  }
+
+  .changeRecordingControl{
+    padding-top: 50px;
+
+  }
+
+  .btn.btn-double{
+    -webkit-transform: scale(2,2);
+    -ms-transform: scale(2,2);
+    transform: scale(2,2);
+    color: #555;
+  }
+
+  /* poor-man's way of binding height of two paragraph elements: */
+  .recordingDescription{
+    height: 50px;
+  }
+
+}

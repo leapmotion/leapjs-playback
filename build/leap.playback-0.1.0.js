@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Playback - v0.1.0 - 2014-04-14                    
+ * LeapJS Playback - v0.1.0 - 2014-04-15                    
  * http://github.com/leapmotion/leapjs-playback/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -730,12 +730,7 @@ if( typeof module !== 'undefined' && module != null ) {
       }
 
       if (options.recording) {
-        this.loadFrameData(options, function(){
-          // initializes frameIndex and stuff
-          this.setFrames(options.recording);
-          this.metadata = options.recording.metadata;
-          options.onReady.call(this);
-        })
+        this.setRecording(options.recording);
       }
 
       if (options.scrollSections && options.scrollSections.length > 0){
@@ -848,7 +843,11 @@ if( typeof module !== 'undefined' && module != null ) {
       this.frameIndex += 1;
       this.frameIndex = this.frameIndex % (this.rightCropPosition || 1);
       if (this.frameIndex == 0 && this.loop == false){
+        // there is currently an issue where angular watching the right handle position
+        // will cause this to fire prematurely
+        // when switching to an earlier recording
         this.pause()
+        this.controller.emit('playback.playbackFinished', this)
       }
       if ((this.frameIndex < this.leftCropPosition)) {
         this.frameIndex = this.leftCropPosition;
@@ -897,8 +896,9 @@ if( typeof module !== 'undefined' && module != null ) {
 
     // used after record
     stop: function () {
-      this.setFrames({frames: []});
+      this.setFrames([]);
       this.idle();
+      this.controller.emit('playback.stop', this)
     },
 
     // used after play
@@ -907,6 +907,7 @@ if( typeof module !== 'undefined' && module != null ) {
       // state should corrospond always to protocol handler (through a setter)?
       this.state = 'idle';
       if (this.overlay) this.hideOverlay();
+      this.controller.emit('playback.pause', this)
     },
 
     idle: function(){
@@ -914,16 +915,34 @@ if( typeof module !== 'undefined' && module != null ) {
       this.controller.connection.protocol = this.stopProtocol;
     },
 
+    toggle: function(){
+      if (this.state == 'idle'){
+        this.play()
+      }else if (this.state == 'playing'){
+        this.pause()
+      }
+    },
+
     // switches to record mode, which will be begin capturing data when a hand enters the frame,
     // and stop when a hand leaves
     // Todo: replace frameData with a full fledged recording, including metadata.
     record: function(){
+      this.clear();
       this.stop();
-      this.frameData = [];
-      this.frameIndex = 0;
       this.state = 'recording';
       this.controller.connection.protocol = this.recordProtocol;
       this.setGraphic('connect');
+      this.controller.emit('playback.record', this)
+    },
+
+    // if there is existing frame data, sends a frame with nothing in it
+    clear: function(){
+      var finalFrame = this.currentFrame()
+      finalFrame.hands = []
+      finalFrame.fingers = []
+      finalFrame.pointables = []
+      finalFrame.tools = []
+      this.sendFrame(finalFrame)
     },
 
     recordPending: function(){
@@ -935,21 +954,19 @@ if( typeof module !== 'undefined' && module != null ) {
     },
 
     finishRecording: function(){
-      // By doing play + pause, we change to the playbackHandler which suppresses frames:
-      this.play();
-      this.pause();
-      this.setFrames({frames: this.frameData});
+      // change to the playbackHandler which suppresses frames:
+      this.controller.connection.protocol = this.playbackProtocol;
+      this.setFrames(this.frameData);
       this.controller.emit('playback.recordingFinished', this)
     },
 
-    setFrames: function (recording) {
-      if (recording.frames) {
-        this.frameData = recording.frames;
-        this.frameIndex = 0;
-        this.maxFrames = recording.frames.length;
-        this.leftCropPosition = 0;
-        this.rightCropPosition = this.maxFrames;
-      }
+    setFrames: function (frames) {
+      this.frameData = frames;
+      this.frameIndex = 0;
+      this.maxFrames = frames.length;
+      this.leftCropPosition = 0;
+      this.rightCropPosition = this.maxFrames;
+      this.setMetaData();
     },
 
     loaded: function(){
@@ -998,6 +1015,7 @@ if( typeof module !== 'undefined' && module != null ) {
 
       this.state = 'playing';
       this.controller.connection.protocol = this.playbackProtocol;
+
       if (options === undefined) {
         options = true;
       }
@@ -1031,6 +1049,7 @@ if( typeof module !== 'undefined' && module != null ) {
         this.stepFrameLoop();
       }
 
+      this.controller.emit('playback.play', this)
     },
 
     // this method replaces connection.handleData when in record mode
@@ -1047,52 +1066,83 @@ if( typeof module !== 'undefined' && module != null ) {
     },
 
 
-    // IO
+    // Accepts a hash with any of
+    // URL, recording, metadata
+    // once loaded, the recording is immeditately activated
+    setRecording: function(recording){
+      var loadComplete = function(recording){
+        this.setFrames(recording.frames);
+        this.metadata = recording.metadata;
+        this.controller.emit('playback.recordingSet', this);
+      }
+
+      if (recording.frames){
+
+        loadComplete.call(this, recording);
+
+
+      } else if (recording.url ){
+
+        this.loadFrameData(recording, loadComplete);
+      }
+
+      return this;
+    },
 
     // optional callback once frames are loaded, will have a context of player
-    // replaces the contents of recordingOrURL in-place when the AJAX has completed.
-    loadFrameData: function (options, callback) {
-      if (typeof options.recording !== 'string') {
-        if (callback) {
-          callback.call(this, options.recording);
-        }
-      } else {
-        var xhr = new XMLHttpRequest(),
-          player = this,
-          url = options.recording;
+    loadFrameData: function (recording, callback) {
+      var xhr = new XMLHttpRequest(),
+        player = this,
+        url = recording.url;
 
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === xhr.DONE) {
-            if (xhr.status === 200 || xhr.status === 0) {
-              if (xhr.responseText) {
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === xhr.DONE) {
+          if (xhr.status === 200 || xhr.status === 0) {
+            if (xhr.responseText) {
 
-                options.recording = xhr.responseText
+              // can't assign to responseText
+              var responseData = xhr.responseText
 
-                if (url.split('.')[url.split('.').length - 1] == 'lz') {
-                  options.recording = player.decompress(options.recording);
-                }
-
-                options.recording = JSON.parse(options.recording);
-
-                player.loading = false;
-                if (callback) {
-                  callback.call(player, options.recording);
-                }
-                player.controller.emit('playback.ajax:complete', player);
-
-              } else {
-                console.error('Leap Playback: "' + url + '" seems to be unreachable or the file is empty.');
+              if (url.split('.')[url.split('.').length - 1] == 'lz') {
+                responseData = player.decompress(responseData);
               }
+
+              responseData = JSON.parse(responseData);
+
+              for (var key in responseData){
+                recording[key] = responseData[key]
+              }
+
+              player.loading = false;
+
+              if (callback) {
+                callback.call(player, recording);
+              }
+
+              // it would be better to use streamingCount here, but that won't be in until 0.5.0+
+              // For now, it just flashes for a moment until the first frame comes through with a hand on it.
+              // if (autoPlay && (controller.streamingCount == 0 || pauseOnHand)) {
+              if (player.autoPlay) {
+                player.play();
+                if ( player.pauseOnHand ) {
+                  player.setGraphic('connect');
+                }
+              }
+
+              player.controller.emit('playback.ajax:complete', player);
+
             } else {
-              console.error('Leap Playback: Couldn\'t load "' + url + '" (' + xhr.status + ')');
+              console.error('Leap Playback: "' + url + '" seems to be unreachable or the file is empty.');
             }
+          } else {
+            console.error('Leap Playback: Couldn\'t load "' + url + '" (' + xhr.status + ')');
           }
-        };
-        player.loading = true;
-        player.controller.emit('playback.ajax:begin', player);
-        xhr.open("GET", url, true);
-        xhr.send(null);
-      }
+        }
+      };
+      player.loading = true;
+      player.controller.emit('playback.ajax:begin', player);
+      xhr.open("GET", url, true);
+      xhr.send(null);
     },
 
     // INTERFACE
@@ -1123,8 +1173,6 @@ if( typeof module !== 'undefined' && module != null ) {
     },
 
 
-    // EXPORTING
-
     // removes every other frame from the array
     // Accepts an optional `factor` integer, which is the number of frames
     // discarded for every frame kept.
@@ -1133,10 +1181,12 @@ if( typeof module !== 'undefined' && module != null ) {
       for (var i = 0; i < this.frameData.length; i++) {
         this.frameData.splice(i, factor);
       }
+      this.setMetaData();
     },
 
-    // Returns the average frame rate of the recording
+    // Returns the average frames per second of the recording
     frameRate: function(){
+      if (this.frameData.length == 0) {return 0};
       return this.frameData.length / (this.frameData[this.frameData.length - 1].timestamp - this.frameData[0].timestamp) * 1000000;
     },
 
@@ -1156,15 +1206,16 @@ if( typeof module !== 'undefined' && module != null ) {
       if (this.controller.connection.protocol){
         newMetaData.serviceVersion = this.controller.connection.protocol.serviceVersion;
       }
+      this.metadata || (this.metadata = {});
       for (var key in newMetaData) { this.metadata[key] = newMetaData[key]; }
     },
 
     toHash: function(){
       this.setMetaData();
       return {
-              frames: this.croppedFrameData(),
-              metadata: this.metadata
-            }
+        frames: this.croppedFrameData(),
+        metadata: this.metadata
+      }
     },
 
     // Returns the cropped data as JSON or compressed
@@ -1226,20 +1277,10 @@ if( typeof module !== 'undefined' && module != null ) {
       overlay.style.id = 'connect-leap';
     }
 
+
     scope.player = new Player(this, {
-      recording: scope.recording,
-      scrollSections: scope.scrollSections,
-      onReady: function () {
-        // it would be better to use streamingCount here, but that won't be in until 0.5.0+
-        // For now, it just flashes for a moment until the first frame comes through with a hand on it.
-        // if (autoPlay && (controller.streamingCount == 0 || pauseOnHand)) {
-        if (autoPlay) {
-          this.play();
-          if ( this.pauseOnHand ) {
-            this.setGraphic('connect');
-          }
-        }
-      }
+      recording: ( (scope.recording instanceof String) ? {url: scope.recording} : scope.recording ) ,
+      scrollSections: scope.scrollSections
     });
 
     // By doing this, we allow player methods to be accessible on the scope

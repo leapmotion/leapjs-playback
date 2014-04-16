@@ -4,6 +4,65 @@ module.exports = (grunt) ->
 
   grunt.initConfig
     pkg: grunt.file.readJSON("package.json")
+    watch: {
+      options: {
+        livereload: true
+      }
+      css: {
+        files: ['recorder/stylesheets/*.scss'],
+        tasks: ['sass'],
+        options: {
+          spawn: false,
+          livereload: true
+        },
+      },
+      coffee: {
+        files: ['recorder/javascripts/*.coffee'],
+        tasks: ['coffee'],
+        options: {
+          spawn: false,
+          livereload: true
+        },
+      },
+      js: {
+        files: ['src/*.js'],
+        tasks: ['clean', 'concat', 'uglify', 'usebanner'],
+        options: {
+          spawn: false,
+          livereload: true
+        },
+      },
+      html: {
+        files: ['recorder/*.html'],
+        tasks: [],
+        options: {
+          spawn: false,
+          livereload: true
+        },
+      },
+    },
+    sass: {
+      build: {
+        files: [{
+          expand: true
+          cwd: 'recorder/stylesheets'
+          src: ['*.scss']
+          dest: 'recorder/stylesheets'
+          ext: '.css'
+        }]
+      }
+    }
+    coffee: {
+      build: {
+        files: [{
+          expand: true
+          cwd: 'recorder/javascripts'
+          src: ['*.coffee']
+          dest: 'recorder/javascripts'
+          ext: '.js'
+        }]
+      }
+    }
     concat: {
       build: {
         src: ['src/lib/*.js', 'src/*.js'],
@@ -56,6 +115,7 @@ module.exports = (grunt) ->
   require('load-grunt-tasks')(grunt);
 
   grunt.registerTask('default', [
+    'sass',
     'clean',
     'concat',
     'uglify',
