@@ -1,12 +1,19 @@
 leapjs-playback
 ==========
 
+## Demo
+
+[leapmotion.github.io/leapjs-playback/recorder](leapmotion.github.io/leapjs-playback/recorder)
+
+
+## About
+
 Record, play, and save Leap Motion frame data.
 
 The leap-playback.js is a [LeapJS plugin](https://developer.leapmotion.com/leapjs/plugins) file which must be loaded
 after leap.js.  Playback does not affect the `Leap.controller` until you `use` it:
 
-## Play back existing data:
+## Usage:
 
 ```javascript
 var controller = new Leap.Controller();
