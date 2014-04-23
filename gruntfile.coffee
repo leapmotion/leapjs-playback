@@ -110,9 +110,22 @@ module.exports = (grunt) ->
         }
         src: ["build/#{filename}.js", "build/#{filename}.min.js"]
       }
+    },
+    connect: {
+      server: {
+        options: {
+          port: 4001,
+          hostname: '*',
+          keepalive: true
+        }
+      }
     }
 
   require('load-grunt-tasks')(grunt);
+
+  grunt.registerTask('serve', [
+    'connect'
+  ]);
 
   grunt.registerTask('default', [
     'sass',
