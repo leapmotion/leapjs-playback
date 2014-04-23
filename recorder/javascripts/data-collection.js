@@ -31,14 +31,14 @@
           return $scope._mode;
         },
         set: function(value) {
-          if (!(['intro', 'outro', 'recording'].indexOf(value) > -1)) {
+          if (!(['intro', 'outro', 'recording', 'off'].indexOf(value) > -1)) {
             throw "Invalid mode: " + value;
           }
           $scope._mode = value;
           return $scope.safeApply();
         }
       });
-      $scope.mode = 'intro';
+      $scope.mode = 'off';
       $scope.next = function(e) {
         $(e.originalEvent.target).closest('button').get(0).blur();
         $scope.currentRecordingIndex++;
@@ -71,12 +71,21 @@
         return player().record();
       };
       window.controller.on('playback.record', function(player) {
+        if ($scope.mode === 'off') {
+          return;
+        }
         return $scope.mode = 'recording';
       });
       window.controller.on('playback.recordingFinished', function() {
+        if ($scope.mode === 'off') {
+          return;
+        }
         return $scope.mode = 'outro';
       });
       window.controller.on('playback.playbackFinished', function() {
+        if ($scope.mode === 'off') {
+          return;
+        }
         return $scope.$apply();
       });
       $scope.canReplay = function() {

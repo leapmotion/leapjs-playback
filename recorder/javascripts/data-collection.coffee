@@ -31,13 +31,13 @@ window.recorder.controller 'DataCollection', ['$scope', ($scope)->
       return $scope._mode
 
     set: (value)->
-      unless ['intro', 'outro', 'recording'].indexOf(value) > -1
+      unless ['intro', 'outro', 'recording', 'off'].indexOf(value) > -1
         throw "Invalid mode: #{value}"
       $scope._mode = value
       $scope.safeApply()
   }
 
-  $scope.mode = 'intro'
+  $scope.mode = 'off'
 
 
   $scope.next = (e)->
@@ -71,13 +71,16 @@ window.recorder.controller 'DataCollection', ['$scope', ($scope)->
 #    window.controller.beginDataCollection()
 
   window.controller.on 'playback.record', (player)->
+    return if $scope.mode == 'off'
     $scope.mode = 'recording'
 
   window.controller.on 'playback.recordingFinished', ->
+    return if $scope.mode == 'off'
 #    window.controller.endDataCollection()
     $scope.mode = 'outro'
 
   window.controller.on 'playback.playbackFinished', ->
+    return if $scope.mode == 'off'
     $scope.$apply()
 
   $scope.canReplay = ->

@@ -37,7 +37,7 @@
 </head>
 <body ng-app="Recorder">
 
-<div data-ng-controller="DataCollection" ng-show="mode != 'recording'">
+<div data-ng-controller="DataCollection" ng-show="mode != 'recording' && mode != 'off'">
 
   <section class="row" id="changeRecording" ng-animate="'animate'" ng-show="mode == 'intro'">
 
