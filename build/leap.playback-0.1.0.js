@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Playback - v0.1.0 - 2014-04-15                    
+ * LeapJS Playback - v0.1.0 - 2014-04-28                    
  * http://github.com/leapmotion/leapjs-playback/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -970,7 +970,7 @@ if( typeof module !== 'undefined' && module != null ) {
     },
 
     loaded: function(){
-      return this.frameData && this.frameData.length
+      return !!(this.frameData && this.frameData.length)
     },
 
     // sets the current frame based upon fractional completion, where 0 is the first frame and 1 is the last

@@ -280,7 +280,7 @@
     },
 
     loaded: function(){
-      return this.frameData && this.frameData.length
+      return !!(this.frameData && this.frameData.length)
     },
 
     // sets the current frame based upon fractional completion, where 0 is the first frame and 1 is the last
