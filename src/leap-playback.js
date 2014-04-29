@@ -40,6 +40,12 @@
       }
 
       if (options.recording) {
+        // string check via underscore.js
+        if (toString.call(options.recording) == '[object String]'){
+          options.recording = {
+            url: options.recording
+          }
+        }
         this.setRecording(options.recording);
       }
 
@@ -378,18 +384,17 @@
 
     // Accepts a hash with any of
     // URL, recording, metadata
-    // once loaded, the recording is immeditately activated
+    // once loaded, the recording is immediately activated
     setRecording: function(recording){
       var loadComplete = function(recording){
         this.setFrames(recording.frames);
         this.metadata = recording.metadata;
         this.controller.emit('playback.recordingSet', this);
-      }
+      };
 
       if (recording.frames){
 
         loadComplete.call(this, recording);
-
 
       } else if (recording.url ){
 
