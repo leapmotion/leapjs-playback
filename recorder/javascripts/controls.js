@@ -42,14 +42,25 @@
       };
       window.controller.on('playback.record', function(player) {
         return $scope.mode = 'record';
-      });
-      window.controller.on('playback.play', function(player) {
+      }).on('playback.play', function(player) {
         $scope.pinHandle = 'min';
         $scope.mode = 'playback';
         return $scope.pause = false;
-      });
-      window.controller.on('playback.pause', function(player) {
+      }).on('playback.pause', function(player) {
         return $scope.pause = true;
+      }).on('playback.ajax:begin', function(player) {
+        $scope.playback();
+        if (!$scope.$$phase) {
+          return $scope.$apply();
+        }
+      }).on('playback.recordingFinished', function() {
+        if (player().loaded()) {
+          $scope.crop();
+        }
+        return document.getElementById('record').blur();
+      }).on('playback.playbackFinished', function() {
+        $scope.paused = true;
+        return $scope.$apply();
       });
       $scope.crop = function() {
         $scope.mode = 'crop';
@@ -75,22 +86,12 @@
       $scope.canPlayBack = function() {
         return !player().loaded();
       };
-      window.controller.on('playback.ajax:begin', function(player) {
-        $scope.playback();
-        if (!$scope.$$phase) {
-          return $scope.$apply();
-        }
-      });
-      window.controller.on('playback.recordingFinished', function() {
-        if (player().loaded()) {
-          $scope.crop();
-        }
-        return document.getElementById('record').blur();
-      });
-      window.controller.on('playback.playbackFinished', function() {
-        $scope.paused = true;
-        return $scope.$apply();
-      });
+      $scope.recordPending = function() {
+        return player().recordPending();
+      };
+      $scope.recording = function() {
+        return player().recording();
+      };
       $scope.playback = function() {
         return player().toggle();
       };

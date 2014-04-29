@@ -27,17 +27,34 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
     $scope.paused = $scope.stopOnRecordButtonClick()
     if $scope.paused then player().finishRecording() else player().record()
 
-  window.controller.on 'playback.record', (player)->
+  window.controller
+
+   .on( 'playback.record', (player)->
     $scope.mode = 'record'
 
-  window.controller.on 'playback.play', (player)->
+  ).on( 'playback.play', (player)->
     $scope.pinHandle = 'min'
     $scope.mode = 'playback'
     $scope.pause = false
 
-  window.controller.on 'playback.pause', (player)->
+  ).on( 'playback.pause', (player)->
     $scope.pause = true
 
+  ).on( 'playback.ajax:begin', (player)->
+    $scope.playback()
+    # note, this is an anti-pattern https://github.com/angular/angular.js/wiki/Anti-Patterns
+    $scope.$apply() unless ($scope.$$phase)
+
+  ).on( 'playback.recordingFinished', ->
+    if player().loaded()
+      $scope.crop()
+    # remove depressed button state on record button -.-
+    document.getElementById('record').blur()
+
+  ).on( 'playback.playbackFinished', ->
+    $scope.paused = true
+    $scope.$apply()
+  )
 
   $scope.crop = ->
     $scope.mode = 'crop'
@@ -65,20 +82,11 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
   $scope.canPlayBack = ->
     !player().loaded()
 
-  window.controller.on 'playback.ajax:begin', (player)->
-    $scope.playback()
-    # note, this is an anti-pattern https://github.com/angular/angular.js/wiki/Anti-Patterns
-    $scope.$apply() unless ($scope.$$phase)
+  $scope.recordPending = ->
+    player().recordPending()
 
-  window.controller.on 'playback.recordingFinished', ->
-    if player().loaded()
-      $scope.crop()
-    # remove depressed button state on record button -.-
-    document.getElementById('record').blur()
-
-  window.controller.on 'playback.playbackFinished', ->
-    $scope.paused = true
-    $scope.$apply()
+  $scope.recording = ->
+    player().recording()
 
 
   $scope.playback = ()->

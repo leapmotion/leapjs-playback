@@ -93,7 +93,7 @@
   <div class="btn-group btn-group-lg dropup" data-toggle="buttons">
 
     <button type="button" class="btn btn-default" ng-click="record()" ng-class="{active: mode=='record'}" id="record">
-      <i class="glyphicon glyphicon-record" ng-class="{orange: player().recordPending(), red: player().recording()}" ng-show="stopOnRecordButtonClick"></i> Record
+      <i class="glyphicon glyphicon-record" ng-class="{orange: recordPending(), red: recording()}" ng-show="stopOnRecordButtonClick"></i> Record
     </button>
 
     <button type="button" class="btn btn-default" ng-click="crop()" ng-class="{active: mode=='crop'}" ng-disabled="canPlayBack()">
