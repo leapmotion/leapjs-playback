@@ -1,10 +1,12 @@
 <html>
 <head>
   <script src="recorder/javascripts/lib/three.min.js"></script>
-  <script src="//js.leapmotion.com/leap-0.6.0-beta1.js"></script>
-  <script src="recorder/javascripts/lib/leap-plugins-0.1.4-pre.js"></script>
-  <script src="recorder/javascripts/lib/leap.rigged-hand-0.1.0.min.js"></script>
-  <script src="build/leap-playback-0.1.0.js"></script>
+  <!--<script src="//js.leapmotion.com/leap-0.6.0-beta2.js"></script>-->
+  <!-- this master build only warns with duplicate plugins.  Can remove w/ beta3.  -->
+  <script src="recorder/javascripts/lib/leap-0.6.0-beta2-master.js"></script>
+  <script src="//js.leapmotion.com/leap-plugins-0.1.4.min.js"></script>
+  <script src="//js.leapmotion.com/leap.rigged-hand-0.1.1.js"></script>
+  <script src="build/leap.playback-0.1.0.js"></script>
   <style>
     body{
       font-family: Helvetica;
@@ -22,8 +24,16 @@
 
 
 <script>
-  Leap.loop({useAllPlugins: false}, function(frame){
-  }).use('playback', {recording: 'recordings/pinch.json.lz', requiredProtocolVersion: 6, pauseOnHand: true, loop: false})
+  Leap.loop(function(frame){
+  })
+    .use('playback', {
+//      recording: 'recordings/pinch.json.lz',
+//      recording: 'recorder/recordings/confidence2-49fps.json.lz',
+      recording: 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/109794/Wave-55fps.json.lz',
+      requiredProtocolVersion: 6,
+      pauseOnHand: true,
+      loop: false
+    })
     .use('riggedHand')
 </script>
 

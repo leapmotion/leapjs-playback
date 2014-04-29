@@ -730,6 +730,12 @@ if( typeof module !== 'undefined' && module != null ) {
       }
 
       if (options.recording) {
+        // string check via underscore.js
+        if (toString.call(options.recording) == '[object String]'){
+          options.recording = {
+            url: options.recording
+          }
+        }
         this.setRecording(options.recording);
       }
 
@@ -1068,18 +1074,17 @@ if( typeof module !== 'undefined' && module != null ) {
 
     // Accepts a hash with any of
     // URL, recording, metadata
-    // once loaded, the recording is immeditately activated
+    // once loaded, the recording is immediately activated
     setRecording: function(recording){
       var loadComplete = function(recording){
         this.setFrames(recording.frames);
         this.metadata = recording.metadata;
         this.controller.emit('playback.recordingSet', this);
-      }
+      };
 
       if (recording.frames){
 
         loadComplete.call(this, recording);
-
 
       } else if (recording.url ){
 
@@ -1300,12 +1305,11 @@ if( typeof module !== 'undefined' && module != null ) {
       }
 
       if (autoPlay) {
-        controller.on('deviceConnected', function () {
+        controller.on('streamingStarted', function () {
           if (scope.player.state == 'recording'){
             scope.player.pause();
             scope.player.setGraphic('wave');
           }else{
-            scope.player.play();
             if (pauseOnHand){
               scope.player.setGraphic('wave');
             }else{
@@ -1314,30 +1318,29 @@ if( typeof module !== 'undefined' && module != null ) {
           }
         });
 
-        controller.on('deviceDisconnected', function () {
+        controller.on('streamingStopped', function () {
           scope.player.play();
         });
       }
-      controller.on('deviceDisconnected', function () {
+      controller.on('streamingStopped', function () {
         scope.player.setGraphic('connect');
       });
     }
 
-    // ready happens before streaming started, allowing us to check the version before responding to streamingStart/Stop
-//    if (this.connected()){
+    // ready happens before streamingStarted, allowing us to check the version before responding to streamingStart/Stop
+    // we can't call this any earlier, or protcol version won't be available
     if (!!this.connection.connected){
       setupStreamingEvents()
     }else{
       this.on('ready', setupStreamingEvents)
     }
 
-
     return {}
   }
 
 
   if ((typeof Leap !== 'undefined') && Leap.Controller) {
-    Leap.Controller.plugin('playback-custom', playback);
+    Leap.Controller.plugin('playback', playback);
   } else if (typeof module !== 'undefined') {
     module.exports.playback = playback;
   } else {

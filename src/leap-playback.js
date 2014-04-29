@@ -615,12 +615,11 @@
       }
 
       if (autoPlay) {
-        controller.on('deviceConnected', function () {
+        controller.on('streamingStarted', function () {
           if (scope.player.state == 'recording'){
             scope.player.pause();
             scope.player.setGraphic('wave');
           }else{
-            scope.player.play();
             if (pauseOnHand){
               scope.player.setGraphic('wave');
             }else{
@@ -629,23 +628,22 @@
           }
         });
 
-        controller.on('deviceDisconnected', function () {
+        controller.on('streamingStopped', function () {
           scope.player.play();
         });
       }
-      controller.on('deviceDisconnected', function () {
+      controller.on('streamingStopped', function () {
         scope.player.setGraphic('connect');
       });
     }
 
-    // ready happens before streaming started, allowing us to check the version before responding to streamingStart/Stop
-//    if (this.connected()){
+    // ready happens before streamingStarted, allowing us to check the version before responding to streamingStart/Stop
+    // we can't call this any earlier, or protcol version won't be available
     if (!!this.connection.connected){
       setupStreamingEvents()
     }else{
       this.on('ready', setupStreamingEvents)
     }
-
 
     return {}
   }
