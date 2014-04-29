@@ -6,7 +6,7 @@
   });
 
   window.player = function() {
-    return window.controller.plugins['playback-custom'].player;
+    return window.controller.plugins['playback'].player;
   };
 
 }).call(this);

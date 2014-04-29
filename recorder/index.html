@@ -23,10 +23,10 @@
   <script src="javascripts/lib/three.min.js"></script>
   <script src="javascripts/lib/TrackballControls.js"></script>
 
-  <script src="//js.leapmotion.com/leap-0.6.0-beta1.js"></script>
+  <script src="javascripts/lib/leap-0.6.0-beta2-master.js"></script>
   <script src="//js.leapmotion.com/leap-plugins-0.1.4.js"></script>
 
-  <script src="javascripts/lib/leap.rigged-hand-0.1.0.min.js"></script>
+  <script src="//js.leapmotion.com/leap.rigged-hand-0.1.1.js"></script>
   <script src="../build/leap.playback-0.1.0.js"></script>
 
   <script src="javascripts/recorder.js"></script>
@@ -247,7 +247,7 @@
 
 <script>
   (window.controller = new Leap.Controller)
-    .use('playback-custom', {loop: false})
+    .use('playback', {loop: false})
     .use('riggedHand')
     .connect()
 
