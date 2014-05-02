@@ -1,0 +1,53 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="../node_modules/mocha/mocha.css"/>
+</head>
+<body>
+<div id="mocha"></div>
+<!--<script src="../../node_modules/underscore/underscore.js"></script>-->
+<script src="../recorder/javascripts/lib/leap-0.6.0-beta2-master.js"></script>
+<script src="//js.leapmotion.com/leap-plugins-0.1.4.min.js"></script>
+<script src="../build/leap.playback-0.1.0.js"></script>
+
+<script src="libs/WebConsole.js"></script>
+<script src="../node_modules/mocha/mocha.js"></script>
+<script>
+    mocha.setup({ ui: 'bdd', globals: ['top', '__flash_getTopLocation', '__flash_getWindowLocation'], reporter: WebConsole });
+</script>
+
+<script>
+  window.controller = new Leap.Controller();
+  controller.use('playback');
+  player = controller.plugins.playback.player;
+
+  describe('AJAX', function () {
+    it ('should handle multiple ajax requests without flooding', function(done){
+      var timesAborted = 0;
+      var timesSucceeded = 0;
+      player.setRecording({url: 'recordings/pinch.json.lz'});
+      player.setRecording({url: 'recordings/grab.json.lz'});
+      controller.on('playback.ajax:aborted', function(){
+        timesAborted++;
+      });
+      controller.on('playback.ajax:complete', function(){
+        console.assert(timesSucceeded == 0);
+        timesSucceeded++;
+        if (timesAborted == 1 && timesSucceeded == 1){
+          done();
+        }
+      });
+    });
+  });
+
+  //      mocha.checkLeaks();
+  //      mocha.globals(['jQuery']);
+  //      mocha.run();
+
+  //      if (window.mochaPhantomJS) { mochaPhantomJS.run(); }
+  //      else {
+  mocha.run();
+  //}
+</script>
+</body>
+</html>

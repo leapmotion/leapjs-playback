@@ -5,9 +5,12 @@
 
   function Player(controller, options) {
     var player = this;
+    options || (options = {});
+
     this.frameData = [];
     this.frameCount = null;
     this.options = options;
+    this.recording = options.recording;
     this.frameIndex = 0;
     this.controller = controller;
     this.loading = false;
@@ -16,7 +19,6 @@
       player.setupProtocols();
     });
 
-    options || (options = {});
 
     if (options.recording) {
       // string check via underscore.js
@@ -335,6 +337,8 @@
         this.controller.emit('playback.recordingSet', this);
       };
 
+      this.recording = recording;
+
       if (recording.frames) {
 
         loadComplete.call(this, recording);
@@ -369,6 +373,12 @@
 
               for (var key in responseData) {
                 recording[key] = responseData[key]
+              }
+
+              if (player.recording != recording){
+                // setRecording has been called before the ajax has returned
+                player.controller.emit('playback.ajax:aborted', player);
+                return
               }
 
               player.loading = false;
