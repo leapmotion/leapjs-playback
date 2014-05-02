@@ -12,21 +12,30 @@
     this.controller = controller;
     this.loading = false;
     this.setupLoops();
-    this.controller.connection.on('ready', function(){
+    this.controller.connection.on('ready', function () {
       player.setupProtocols();
     });
-    
+
     options || (options = {});
-    
+
     if (options.recording) {
       // string check via underscore.js
-      if (toString.call(options.recording) == '[object String]'){
+      if (toString.call(options.recording) == '[object String]') {
         options.recording = {
           url: options.recording
         }
-        this.play();
       }
+      this.setRecording(options.recording);
     }
+
+    document.addEventListener("DOMContentLoaded", function(event) {
+      document.body.addEventListener('keydown', function (e) {
+        if (e.which === player.options.pauseHotkey) {
+          player.toggle();
+        }
+      }, false);
+    });
+
   }
 
   Player.prototype = {
@@ -52,7 +61,7 @@
 
 
     },
-    
+
     // This is how we intercept frame data early
     // By hooking in before Frame creation, we get data exactly as the frame sends it.
     setupProtocols: function () {
@@ -66,18 +75,18 @@
         var eventOrFrame = player.stopProtocol(data);
         if (eventOrFrame instanceof Leap.Frame) {
 
-          if (player.pauseOnHand){
+          if (player.pauseOnHand) {
             if (data.hands.length > 0) {
               player.setGraphic();
               player.idle();
-            }else if (data.hands.length == 0){
+            } else if (data.hands.length == 0) {
               player.setGraphic('wave');
             }
           }
 
           // prevent the actual frame from getting through
           return {type: 'playback'}
-        }else{
+        } else {
           return eventOrFrame;
         }
       };
@@ -101,7 +110,7 @@
       }
 
       // todo: this is messy. Should cover all cases, not just active playback!
-      if (this.state == 'playing'){
+      if (this.state == 'playing') {
         this.controller.connection.protocol = this.playbackProtocol
       }
     },
@@ -109,8 +118,8 @@
     currentFrame: function () {
       return this.frameData[this.frameIndex];
     },
-    
-    nextFrame: function(){
+
+    nextFrame: function () {
       var frameIndex = this.frameIndex + 1;
       // || 1 to prevent `mod 0` error when finishing recording before setFrames has been called.
       frameIndex = frameIndex % (this.rightCropPosition || 1);
@@ -123,7 +132,7 @@
     advanceFrame: function () {
       this.frameIndex += 1;
       this.frameIndex = this.frameIndex % (this.rightCropPosition || 1);
-      if (this.frameIndex == 0 && this.loop == false){
+      if (this.frameIndex == 0 && this.loop == false) {
         // there is currently an issue where angular watching the right handle position
         // will cause this to fire prematurely
         // when switching to an earlier recording
@@ -136,9 +145,9 @@
     },
 
     // returns ms
-    timeToNextFrame: function(){
-      var elapsedTime = (this.nextFrame().timestamp - this.currentFrame().timestamp)  / 1000;
-      if (elapsedTime < 0){
+    timeToNextFrame: function () {
+      var elapsedTime = (this.nextFrame().timestamp - this.currentFrame().timestamp) / 1000;
+      if (elapsedTime < 0) {
         elapsedTime = this.timeBetweenLoops; //arbitrary pause at slightly less than 30 fps.
       }
       return elapsedTime;
@@ -175,15 +184,15 @@
       this.controller.emit('playback.pause', this)
     },
 
-    idle: function(){
+    idle: function () {
       this.state = 'idle';
       this.controller.connection.protocol = this.stopProtocol;
     },
 
-    toggle: function(){
-      if (this.state == 'idle'){
+    toggle: function () {
+      if (this.state == 'idle') {
         this.play()
-      }else if (this.state == 'playing'){
+      } else if (this.state == 'playing') {
         this.pause()
       }
     },
@@ -191,7 +200,7 @@
     // switches to record mode, which will be begin capturing data when a hand enters the frame,
     // and stop when a hand leaves
     // Todo: replace frameData with a full fledged recording, including metadata.
-    record: function(){
+    record: function () {
       this.clear();
       this.stop();
       this.state = 'recording';
@@ -201,7 +210,7 @@
     },
 
     // if there is existing frame data, sends a frame with nothing in it
-    clear: function(){
+    clear: function () {
       var finalFrame = this.currentFrame()
       finalFrame.hands = []
       finalFrame.fingers = []
@@ -210,15 +219,15 @@
       this.sendFrame(finalFrame)
     },
 
-    recordPending: function(){
+    recordPending: function () {
       return this.state == 'recording' && this.frameData.length == 0
     },
 
-    recording: function(){
+    recording: function () {
       return this.state == 'recording' && this.frameData.length != 0
     },
 
-    finishRecording: function(){
+    finishRecording: function () {
       // change to the playbackHandler which suppresses frames:
       this.controller.connection.protocol = this.playbackProtocol;
       this.setFrames(this.frameData);
@@ -234,7 +243,7 @@
       this.setMetaData();
     },
 
-    loaded: function(){
+    loaded: function () {
       return !!(this.frameData && this.frameData.length)
     },
 
@@ -246,26 +255,26 @@
       if (section.recording.frames === undefined) return; // whilst AJAX in-flight
       var frameIndex = Math.round(section.completion * section.recording.frames.length);
 
-      if (frameIndex != section.currentPosition){
+      if (frameIndex != section.currentPosition) {
         section.currentPosition = frameIndex;
         this.sendFrame(section.recording.frames[frameIndex]);
       }
     },
 
-    setFrameIndex: function(frameIndex){
-      if (frameIndex != this.frameIndex){
+    setFrameIndex: function (frameIndex) {
+      if (frameIndex != this.frameIndex) {
         this.frameIndex = frameIndex % this.frameCount;
         this.sendFrame(this.currentFrame());
       }
     },
 
     // sets the crop-point of the current recording to the current position.
-    leftCrop: function(){
+    leftCrop: function () {
       this.leftCropPosition = this.frameIndex
     },
 
     // sets the crop-point of the current recording to the current position.
-    rightCrop: function(){
+    rightCrop: function () {
       this.rightCropPosition = this.frameIndex
     },
 
@@ -286,14 +295,17 @@
       // prevent the normal controller response while playing
       this.controller.connection.removeAllListeners('frame');
       this.controller.connection.on('frame', function (frame) {
+        // resume play when hands are removed:
         if (player.autoPlay && player.state == 'idle' && frame.hands.length == 0) {
           player.play();
         }
 
+        // The default LeapJS callback processes the frame, which is what we do now:
         player.controller.processFrame(frame);
       });
 
       // Kick off
+      console.log('starting frame step loop');
       this.stepFrameLoop();
 
       this.controller.emit('playback.play', this)
@@ -301,13 +313,13 @@
 
     // this method replaces connection.handleData when in record mode
     // It accepts the raw connection data which is used to make a frame.
-    recordFrameHandler: function(frameData){
+    recordFrameHandler: function (frameData) {
       // Would be better to check controller.streaming() in showOverlay, but that method doesn't exist, yet.
       this.setGraphic('wave');
-      if (frameData.hands.length > 0){
+      if (frameData.hands.length > 0) {
         this.frameData.push(frameData)
         this.hideOverlay()
-      } else if ( this.frameData.length > 0){
+      } else if (this.frameData.length > 0) {
         this.finishRecording()
       }
     },
@@ -316,18 +328,18 @@
     // Accepts a hash with any of
     // URL, recording, metadata
     // once loaded, the recording is immediately activated
-    setRecording: function(recording){
-      var loadComplete = function(recording){
+    setRecording: function (recording) {
+      var loadComplete = function (recording) {
         this.setFrames(recording.frames);
         this.metadata = recording.metadata;
         this.controller.emit('playback.recordingSet', this);
       };
 
-      if (recording.frames){
+      if (recording.frames) {
 
         loadComplete.call(this, recording);
 
-      } else if (recording.url ){
+      } else if (recording.url) {
 
         this.loadFrameData(recording, loadComplete);
       }
@@ -355,7 +367,7 @@
 
               responseData = JSON.parse(responseData);
 
-              for (var key in responseData){
+              for (var key in responseData) {
                 recording[key] = responseData[key]
               }
 
@@ -370,7 +382,7 @@
               // if (autoPlay && (controller.streamingCount == 0 || pauseOnHand)) {
               if (player.autoPlay) {
                 player.play();
-                if ( player.pauseOnHand ) {
+                if (player.pauseOnHand) {
                   player.setGraphic('connect');
                 }
               }
@@ -399,11 +411,11 @@
 
 
     // Accepts either "connect", "wave", or undefined.
-    setGraphic: function(graphicName){
+    setGraphic: function (graphicName) {
       if (this.graphicName == graphicName) return;
 
       this.graphicName = graphicName;
-      switch(graphicName) {
+      switch (graphicName) {
         case 'connect':
           this.overlay.style.display = 'block';
           this.overlay.innerHTML = CONNECT_LEAP_ICON;
@@ -431,17 +443,19 @@
     },
 
     // Returns the average frames per second of the recording
-    frameRate: function(){
-      if (this.frameData.length == 0) {return 0};
+    frameRate: function () {
+      if (this.frameData.length == 0) {
+        return 0
+      }
       return this.frameData.length / (this.frameData[this.frameData.length - 1].timestamp - this.frameData[0].timestamp) * 1000000;
     },
 
     // returns frames without any circular references
-    croppedFrameData: function(){
+    croppedFrameData: function () {
       return this.frameData.slice(this.leftCropPosition, this.rightCropPosition);
     },
 
-    setMetaData: function(){
+    setMetaData: function () {
       var newMetaData = {
         formatVersion: 1,
         generatedBy: 'LeapJS Playback 0.1-pre',
@@ -449,14 +463,16 @@
         protocolVersion: this.controller.connection.opts.requestProtocolVersion,
         frameRate: this.frameRate().toPrecision(2)
       }
-      if (this.controller.connection.protocol){
+      if (this.controller.connection.protocol) {
         newMetaData.serviceVersion = this.controller.connection.protocol.serviceVersion;
       }
       this.metadata || (this.metadata = {});
-      for (var key in newMetaData) { this.metadata[key] = newMetaData[key]; }
+      for (var key in newMetaData) {
+        this.metadata[key] = newMetaData[key];
+      }
     },
 
-    toHash: function(){
+    toHash: function () {
       this.setMetaData();
       return {
         frames: this.croppedFrameData(),
@@ -466,15 +482,15 @@
 
     // Returns the cropped data as JSON or compressed
     // http://pieroxy.net/blog/pages/lz-string/index.html
-    export: function(format){
+    export: function (format) {
       var json = JSON.stringify(this.toHash());
 
-      if (format == 'json' ) return json;
+      if (format == 'json') return json;
 
       return LZString.compressToBase64(json);
     },
 
-    decompress: function(data){
+    decompress: function (data) {
       return LZString.decompressFromBase64(data)
     }
 
@@ -490,18 +506,22 @@
   // - requiredProtocolVersion: clients connected with a lower protocol number will not be able to take control of the
   // - timeBetweenLoops: [number, ms] delay between looping playback
   // controller with their device.  This option, if set, ovverrides autoPlay
+  // - pauseHotkey: [number or false, default: 32 (spacebar)] - keycode for pause, bound to body
   var playback = function (scope) {
     var controller = this;
     var autoPlay = scope.autoPlay;
     if (autoPlay === undefined) autoPlay = true;
 
     var pauseOnHand = scope.pauseOnHand;
-    if (pauseOnHand === undefined) pauseOnHand = false;
+    if (pauseOnHand === undefined) pauseOnHand = true;
 
     var timeBetweenLoops = scope.timeBetweenLoops;
     if (timeBetweenLoops === undefined) timeBetweenLoops = 50;
 
     var requiredProtocolVersion = scope.requiredProtocolVersion;
+
+    var pauseHotkey = scope.pauseHotkey;
+    if (pauseHotkey === undefined) pauseHotkey = 32; // spacebar
 
     var loop = scope.loop;
 
@@ -522,7 +542,7 @@
       overlay.style.zIndex = '10';
       overlay.id = 'connect-leap';
       overlay.style.cursor = 'pointer';
-      overlay.addEventListener("click", function(){
+      overlay.addEventListener("click", function () {
         this.style.display = 'none';
         return false;
       }, false);
@@ -531,7 +551,8 @@
 
 
     scope.player = new Player(this, {
-      recording: ( (scope.recording instanceof String) ? {url: scope.recording} : scope.recording )
+      recording: ( (scope.recording instanceof String) ? {url: scope.recording} : scope.recording ),
+      pauseHotkey: pauseHotkey
     });
 
     // By doing this, we allow player methods to be accessible on the scope
@@ -543,8 +564,8 @@
     scope.player.timeBetweenLoops = timeBetweenLoops;
     scope.player.loop = loop;
 
-    var setupStreamingEvents = function(){
-      if (scope.player.pauseOnHand && controller.connection.opts.requestProtocolVersion < scope.requiredProtocolVersion){
+    var setupStreamingEvents = function () {
+      if (scope.player.pauseOnHand && controller.connection.opts.requestProtocolVersion < scope.requiredProtocolVersion) {
         console.log('Protocol Version too old (' + controller.connection.opts.requestProtocolVersion + '), disabling device interaction.');
         scope.player.pauseOnHand = false;
         return
@@ -552,13 +573,13 @@
 
       if (autoPlay) {
         controller.on('streamingStarted', function () {
-          if (scope.player.state == 'recording'){
+          if (scope.player.state == 'recording') {
             scope.player.pause();
             scope.player.setGraphic('wave');
-          }else{
-            if (pauseOnHand){
+          } else {
+            if (pauseOnHand) {
               scope.player.setGraphic('wave');
-            }else{
+            } else {
               scope.player.setGraphic();
             }
           }
@@ -575,9 +596,9 @@
 
     // ready happens before streamingStarted, allowing us to check the version before responding to streamingStart/Stop
     // we can't call this any earlier, or protcol version won't be available
-    if (!!this.connection.connected){
+    if (!!this.connection.connected) {
       setupStreamingEvents()
-    }else{
+    } else {
       this.on('ready', setupStreamingEvents)
     }
 
