@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Playback - v0.2.0 - 2014-05-02                    
+ * LeapJS Playback - v0.2.0 - 2014-05-03                    
  * http://github.com/leapmotion/leapjs-playback/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -734,10 +734,9 @@ if( typeof module !== 'undefined' && module != null ) {
     this.options = options;
     this.recording = options.recording;
     this.frameIndex = 0;
-    this.timeSinceLastFrame = 0;
-    this.lastFrameTime = null;
     this.controller = controller;
     this.loading = false;
+    this.resetTimers();
     this.setupLoops();
     this.controller.connection.on('ready', function () {
       player.setupProtocols();
@@ -765,6 +764,11 @@ if( typeof module !== 'undefined' && module != null ) {
   }
 
   Player.prototype = {
+    resetTimers: function (){
+      this.timeSinceLastFrame = 0;
+      this.lastFrameTime = null;
+    },
+
     setupLoops: function () {
       var player = this;
 
@@ -1115,7 +1119,7 @@ if( typeof module !== 'undefined' && module != null ) {
       });
 
       // Kick off
-      console.log('starting frame step loop');
+      this.resetTimers();
       this.stepFrameLoop();
 
       this.controller.emit('playback.play', this)
