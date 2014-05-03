@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Playback - v0.1.0 - 2014-05-02                    
+ * LeapJS Playback - v0.2.0 - 2014-05-02                    
  * http://github.com/leapmotion/leapjs-playback/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -918,8 +918,6 @@ if( typeof module !== 'undefined' && module != null ) {
 
       }
 
-      document.getElementById('debugger').innerHTML = t;
-
       return frameData;
     },
 
@@ -929,6 +927,8 @@ if( typeof module !== 'undefined' && module != null ) {
 
       // first
       if (this.lastFrameTime){
+        // there's currently something really funky going on, where
+        // this assertion fails:
 //        console.assert(this.lastFrameTime < now);
         this.timeSinceLastFrame += (now - this.lastFrameTime);
       }
@@ -944,7 +944,6 @@ if( typeof module !== 'undefined' && module != null ) {
         this.timeSinceLastFrame -= timeToNextFrame;
         this.advanceFrame();
       }
-      //document.getElementById('debugger').innerHTML = this.timeSinceLastFrame + "<br>" + timeToNextFrame;
 
       this.sendFrame(
         this.createLerpFrameData(this.timeSinceLastFrame / timeToNextFrame)
@@ -984,7 +983,7 @@ if( typeof module !== 'undefined' && module != null ) {
     // used after play
     pause: function () {
       // todo: we should change this idle state to paused or leave it as playback with a pause flag
-      // state should corrospond always to protocol handler (through a setter)?
+      // state should correspond always to protocol handler (through a setter)?
       this.state = 'idle';
       if (this.overlay) this.hideOverlay();
       this.controller.emit('playback.pause', this)
@@ -1368,7 +1367,7 @@ if( typeof module !== 'undefined' && module != null ) {
 
     scope.player = new Player(this, {
       recording: ( (scope.recording instanceof String) ? {url: scope.recording} : scope.recording ),
-      pauseHotkey: pauseHotkey
+      pauseHotkey: pauseHotkey,
     });
 
     // By doing this, we allow player methods to be accessible on the scope
