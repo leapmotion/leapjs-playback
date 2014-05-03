@@ -12,6 +12,8 @@
     this.options = options;
     this.recording = options.recording;
     this.frameIndex = 0;
+    this.timeSinceLastFrame = 0;
+    this.lastFrameTime = null;
     this.controller = controller;
     this.loading = false;
     this.setupLoops();
@@ -45,20 +47,16 @@
       var player = this;
 
       // Loop with explicit frame timing
-      this.stepFrameLoop = function () {
+      this.stepFrameLoop = function (timestamp) {
         if (player.state != 'playing') return;
-        player.sendFrame(player.currentFrame());
+
+        player.sendFrameAt(timestamp || performance.now());
 
         if (!player.options.loop && (player.currentFrameIndex > player.frameIndex)) {
           player.pause();
         }
 
-        setTimeout(
-          player.stepFrameLoop,
-          player.timeToNextFrame()
-        );
-
-        player.advanceFrame();
+        requestAnimationFrame(player.stepFrameLoop);
       };
 
 
@@ -138,12 +136,110 @@
         // there is currently an issue where angular watching the right handle position
         // will cause this to fire prematurely
         // when switching to an earlier recording
-        this.pause()
-        this.controller.emit('playback.playbackFinished', this)
+        this.pause();
+        this.controller.emit('playback.playbackFinished', this);
       }
       if ((this.frameIndex < this.leftCropPosition)) {
         this.frameIndex = this.leftCropPosition;
       }
+    },
+
+
+    // this method would be well-moved to its own object/class -.-
+    // for every point, lerp as appropriate
+    createLerpFrameData: function(t){
+      // http://stackoverflow.com/a/5344074/478354
+      var currentFrame = this.currentFrame(),
+          nextFrame = this.nextFrame(),
+          handProps = ['palmPosition', 'stabilizedPalmPosition', 'sphereCenter', 'direction', 'palmNormal', 'palmVelocity'],
+          fingerProps = ['mcpPosition', 'pipPosition', 'dipPosition', 'tipPosition', 'direction'],
+          frameData = JSON.parse(JSON.stringify(currentFrame)),
+          numHands = frameData.hands.length,
+          len1 = handProps.length,
+          len2 = fingerProps.length,
+          prop, hand, pointable;
+
+      for (var i = 0; i < numHands; i++){
+        hand = frameData.hands[i];
+
+        for (var j = 0; j < len1; j++){
+          prop = handProps[j];
+
+          Leap.vec3.lerp(
+            hand[prop],
+            currentFrame.hands[i][prop],
+            nextFrame.hands[i][prop],
+            t
+          );
+
+          console.assert(hand[prop]);
+        }
+
+      }
+
+      for (var i = 0; i < 5; i++){
+        pointable = frameData.pointables[i];
+
+        for (var j = 0; j < len2; j++){
+          prop = fingerProps[j];
+
+          Leap.vec3.lerp(
+            pointable[prop],
+            currentFrame.pointables[i][prop],
+            nextFrame.pointables[i][prop],
+            0
+          );
+//          console.assert(t >= 0 && t <= 1);
+//          if (t > 0) debugger;
+
+        }
+
+      }
+
+      return frameData;
+    },
+
+    // Adds playback = true to artificial frames
+    sendFrameAt: function (now) {
+      // note that currently frame json is sent as nested arrays, unnecessarily.  That should be fixed.
+
+      // first
+      if (this.lastFrameTime){
+        // there's currently something really funky going on, where
+        // this assertion fails:
+//        console.assert(this.lastFrameTime < now);
+        this.timeSinceLastFrame += (now - this.lastFrameTime);
+      }
+
+      this.lastFrameTime = now;
+
+      console.assert(!isNaN(this.timeSinceLastFrame));
+
+
+      var timeToNextFrame;
+
+      while (this.timeSinceLastFrame > (timeToNextFrame = this.timeToNextFrame())){
+        this.timeSinceLastFrame -= timeToNextFrame;
+        this.advanceFrame();
+      }
+
+      this.sendFrame(
+        this.createLerpFrameData(this.timeSinceLastFrame / timeToNextFrame)
+      );
+
+    },
+
+    sendFrame: function(frameData){
+      if (!frameData) throw "Frame data not provided";
+
+      var frame = new Leap.Frame(frameData);
+
+      // send a deviceFrame to the controller:
+      // this frame gets picked up by the controllers own animation loop.
+
+      this.controller.processFrame(frame);
+      this.currentFrameIndex = this.frameIndex;
+      return true
     },
 
     // returns ms
@@ -154,21 +250,6 @@
       }
       return elapsedTime;
     },
-
-
-    // Adds playback = true to artificial frames
-    sendFrame: function (frameData) {
-      if (!frameData) throw "Frame data not provided";
-      // note that currently frame json is sent as nested arrays, unnecessarily.  That should be fixed.
-      var frame = new Leap.Frame(frameData);
-
-      // send a deviceFrame to the controller:
-      // this frame gets picked up by the controllers own animation loop.
-      this.controller.processFrame(frame);
-      this.currentFrameIndex = this.frameIndex;
-      return true
-    },
-
 
     // used after record
     stop: function () {
@@ -564,7 +645,7 @@
 
     scope.player = new Player(this, {
       recording: ( (scope.recording instanceof String) ? {url: scope.recording} : scope.recording ),
-      pauseHotkey: pauseHotkey
+      pauseHotkey: pauseHotkey,
     });
 
     // By doing this, we allow player methods to be accessible on the scope
