@@ -927,10 +927,15 @@ if( typeof module !== 'undefined' && module != null ) {
 
       // first
       if (this.lastFrameTime){
-        // there's currently something really funky going on, where
-        // this assertion fails:
-//        console.assert(this.lastFrameTime < now);
-        this.timeSinceLastFrame += (now - this.lastFrameTime);
+        // chrome bug, see: https://code.google.com/p/chromium/issues/detail?id=268213
+        // http://jsfiddle.net/pehrlich/35pTx/
+        // console.assert(this.lastFrameTime < now);
+        if (now < this.lastFrameTime){
+          // this fix will cause an extra animation frame before the lerp frame advances. no big.
+          this.lastFrameTime = now;
+        }else{
+          this.timeSinceLastFrame += (now - this.lastFrameTime);
+        }
       }
 
       this.lastFrameTime = now;
@@ -940,7 +945,7 @@ if( typeof module !== 'undefined' && module != null ) {
 
       var timeToNextFrame;
 
-      while (this.timeSinceLastFrame > (timeToNextFrame = this.timeToNextFrame())){
+      while ( this.timeSinceLastFrame > ( timeToNextFrame = this.timeToNextFrame() ) ){
         this.timeSinceLastFrame -= timeToNextFrame;
         this.advanceFrame();
       }

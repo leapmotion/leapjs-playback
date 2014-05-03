@@ -12,10 +12,9 @@
     this.options = options;
     this.recording = options.recording;
     this.frameIndex = 0;
-    this.timeSinceLastFrame = 0;
-    this.lastFrameTime = null;
     this.controller = controller;
     this.loading = false;
+    this.resetTimers();
     this.setupLoops();
     this.controller.connection.on('ready', function () {
       player.setupProtocols();
@@ -43,6 +42,11 @@
   }
 
   Player.prototype = {
+    resetTimers: function (){
+      this.timeSinceLastFrame = 0;
+      this.lastFrameTime = null;
+    },
+
     setupLoops: function () {
       var player = this;
 
@@ -205,10 +209,15 @@
 
       // first
       if (this.lastFrameTime){
-        // there's currently something really funky going on, where
-        // this assertion fails:
-//        console.assert(this.lastFrameTime < now);
-        this.timeSinceLastFrame += (now - this.lastFrameTime);
+        // chrome bug, see: https://code.google.com/p/chromium/issues/detail?id=268213
+        // http://jsfiddle.net/pehrlich/35pTx/
+        // console.assert(this.lastFrameTime < now);
+        if (now < this.lastFrameTime){
+          // this fix will cause an extra animation frame before the lerp frame advances. no big.
+          this.lastFrameTime = now;
+        }else{
+          this.timeSinceLastFrame += (now - this.lastFrameTime);
+        }
       }
 
       this.lastFrameTime = now;
@@ -218,7 +227,7 @@
 
       var timeToNextFrame;
 
-      while (this.timeSinceLastFrame > (timeToNextFrame = this.timeToNextFrame())){
+      while ( this.timeSinceLastFrame > ( timeToNextFrame = this.timeToNextFrame() ) ){
         this.timeSinceLastFrame -= timeToNextFrame;
         this.advanceFrame();
       }
@@ -388,7 +397,7 @@
       });
 
       // Kick off
-      console.log('starting frame step loop');
+      this.resetTimers();
       this.stepFrameLoop();
 
       this.controller.emit('playback.play', this)
