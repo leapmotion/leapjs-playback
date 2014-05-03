@@ -180,7 +180,7 @@
     // used after play
     pause: function () {
       // todo: we should change this idle state to paused or leave it as playback with a pause flag
-      // state should corrospond always to protocol handler (through a setter)?
+      // state should correspond always to protocol handler (through a setter)?
       this.state = 'idle';
       if (this.overlay) this.hideOverlay();
       this.controller.emit('playback.pause', this)
@@ -334,6 +334,18 @@
       var loadComplete = function (recording) {
         this.setFrames(recording.frames);
         this.metadata = recording.metadata;
+
+        // it would be better to use streamingCount here, but that won't be in until 0.5.0+
+        // For now, it just flashes for a moment until the first frame comes through with a hand on it.
+        // if (autoPlay && (controller.streamingCount == 0 || pauseOnHand)) {
+        if (this.autoPlay) {
+          this.play();
+          if (this.pauseOnHand) {
+            this.setGraphic('connect');
+          }
+        }
+
+
         this.controller.emit('playback.recordingSet', this);
       };
 
@@ -385,16 +397,6 @@
 
               if (callback) {
                 callback.call(player, recording);
-              }
-
-              // it would be better to use streamingCount here, but that won't be in until 0.5.0+
-              // For now, it just flashes for a moment until the first frame comes through with a hand on it.
-              // if (autoPlay && (controller.streamingCount == 0 || pauseOnHand)) {
-              if (player.autoPlay) {
-                player.play();
-                if (player.pauseOnHand) {
-                  player.setGraphic('connect');
-                }
               }
 
               player.controller.emit('playback.ajax:complete', player);
