@@ -65,7 +65,7 @@ module.exports = (grunt) ->
     }
     concat: {
       build: {
-        src: ['src/lib/*.js', 'src/*.js'],
+        src: ['src/lib/*.js', 'src/recording.js', 'src/player.js'],
         dest: "build/#{filename}.js",
         options: {
           banner: ";(function( window, undefined ){ \n 'use strict';\n  // see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions_and_function_scope/Strict_mode \n\n",

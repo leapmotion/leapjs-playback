@@ -1,8 +1,8 @@
 (function() {
   window.recorder.controller('Controls', [
     '$scope', '$location', '$document', function($scope, $location, $document) {
-      $scope.maxFrames = function() {
-        return Math.max(player().maxFrames - 1, 0);
+      $scope.recordingLength = function() {
+        return Math.max(player().recording.frameData.length - 1, 0);
       };
       $scope.mode = '';
       $scope.leftHandlePosition;
@@ -18,7 +18,7 @@
           return;
         }
         player().setFrameIndex(parseInt(newVal, 10));
-        return player().leftCrop();
+        return player().recording.leftCrop();
       });
       $scope.$watch('rightHandlePosition', function(newVal, oldVal) {
         if (newVal === oldVal) {
@@ -29,7 +29,7 @@
         }
         player().setFrameIndex(parseInt(newVal, 10));
         if ($scope.mode === 'crop') {
-          return player().rightCrop();
+          return player().recording.rightCrop();
         }
       });
       $scope.record = function() {
@@ -67,14 +67,14 @@
         $scope.pinHandle = '';
         setTimeout(function() {
           $scope.inDigestLoop = true;
-          $scope.leftHandlePosition = player().leftCropPosition;
-          $scope.rightHandlePosition = player().rightCropPosition;
+          $scope.leftHandlePosition = player().recording.leftCropPosition;
+          $scope.rightHandlePosition = player().recording.rightCropPosition;
           $scope.$apply();
           return $scope.inDigestLoop = false;
         }, 0);
         player().pause();
         return setTimeout(function() {
-          return player().sendFrame(player().currentFrame());
+          return player().sendFrame(player().recording.currentFrame());
         }, 0);
       };
       $scope.stopOnRecordButtonClick = function() {
@@ -90,7 +90,7 @@
         return player().recordPending();
       };
       $scope.recording = function() {
-        return player().recording();
+        return player().isRecording();
       };
       $scope.playback = function() {
         return player().toggle();
@@ -140,27 +140,14 @@
         $scope.inDigestLoop = true;
         $scope.$apply(function() {
           if ($scope.mode === 'playback') {
-            $scope.leftHandlePosition = player().leftCropPosition;
-            return $scope.rightHandlePosition = player().frameIndex;
+            $scope.leftHandlePosition = player().recording.leftCropPosition;
+            return $scope.rightHandlePosition = player().recording.frameIndex;
           }
         });
         return $scope.inDigestLoop = false;
       });
       return $scope.save = function(format) {
-        var filename;
-        filename = player().metadata.title ? player().metadata.title.replace(/\s/g, '') : 'leap-playback-recording';
-        if (player().metadata.frameRate) {
-          filename += "-" + (Math.round(player().metadata.frameRate)) + "fps";
-        }
-        if (format === 'json') {
-          return saveAs(new Blob([player()["export"]('json')], {
-            type: "text/JSON;charset=utf-8"
-          }), "" + filename + ".json");
-        } else {
-          return saveAs(new Blob([player()["export"]('lz')], {
-            type: "text/JSON;charset=utf-8"
-          }), "" + filename + ".json.lz");
-        }
+        return player().recording.save(format);
       };
     }
   ]);

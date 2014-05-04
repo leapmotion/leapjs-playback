@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>LeapJS Playback Recorder</title>
-  
+
   <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="stylesheets/lib/angular.rangeSlider.css">
   <link rel="stylesheet" href="stylesheets/main.css">
@@ -27,7 +27,7 @@
   <script src="//js.leapmotion.com/leap-plugins-0.1.4.js"></script>
 
   <script src="//js.leapmotion.com/leap.rigged-hand-0.1.1.js"></script>
-  <script src="../build/leap.playback-0.1.0.js"></script>
+  <script src="../build/leap.playback-0.2.0.js"></script>
 
   <script src="javascripts/recorder.js"></script>
   <script src="javascripts/controls.js"></script>
@@ -87,7 +87,7 @@
 <div id="controls" data-ng-controller="Controls">
   <div id="range"
        pin-handle="{{pinHandle}}"
-       range-slider min="0" max="maxFrames()" model-min="leftHandlePosition" model-max="rightHandlePosition"
+       range-slider min="0" max="recordingLength()" model-min="leftHandlePosition" model-max="rightHandlePosition"
        ng-show="mode == 'crop' || mode == 'playback'"></div>
 
   <div class="btn-group btn-group-lg dropup" data-toggle="buttons">
@@ -101,8 +101,8 @@
     </button>
 
     <button style="text-align: left" type="button" class="btn btn-default" ng-click="playback()" ng-class="{active: mode=='playback'}" ng-disabled="canPlayBack()">
-      <span ng-show="player().loading" us-spinner="{radius:4, width:2, length: 4, left: '20px'}" style="width: 18px; display: inline-block;"></span>
-      <span ng-show="!player().loading && !pauseOnPlaybackButtonClick()">&#9654;</span> <span ng-show="!player().loading && pauseOnPlaybackButtonClick()"><i class="glyphicon glyphicon-pause"></i> </span>Playback
+      <span ng-show="player().loading()" us-spinner="{radius:4, width:2, length: 4, left: '20px'}" style="width: 18px; display: inline-block;"></span>
+      <span ng-show="!player().loading() && !pauseOnPlaybackButtonClick()">&#9654;</span> <span ng-show="!player().loading() && pauseOnPlaybackButtonClick()"><i class="glyphicon glyphicon-pause"></i> </span>Playback
     </button>
 
     <!--
@@ -127,6 +127,8 @@
       <li><a href="#" ng-click="save()"><b>Compressed</b></a></li>
       <li><a href="#" ng-click="save('json')">As JSON</a></li>
     </ul>
+    <!-- todo: angular router, show metadata -->
+    <!--<a href="#">Options</a>-->
   </div>
 </div>
 
@@ -191,52 +193,59 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title">Metadata</h4>
+        <h4 class="modal-title">Options</h4>
       </div>
       <div class="modal-body">
-          <table>
+        <input type="checkbox" name="allow-background" id="allow-background" ng-model="allowBackground"/>
+        <label for="allow-background">Allow Background</label>
 
-            <tr>
-              <td>title</td>
-              <td>
-                <a href="#" editable-text="metadata.title">
-                  {{metadata.title || 'Edit'}}
-                </a>
-              </td>
-            </tr>
-            <tr>
-              <td>description</td>
-              <td>
-                <a href="#" editable-textarea="metadata.description" e-rows="2" e-cols="40">
-                  {{metadata.description || 'Edit'}}
-                </a>
-              </td>
-            </tr>
-            <tr>
-              <td>formatVersion</td>
-              <td>{{metadata.formatVersion}}</td>
-            </tr>
-            <tr>
-              <td>frameRate</td>
-              <td>{{metadata.frameRate}}</td>
-            </tr>
-            <tr>
-              <td>frames</td>
-              <td>{{metadata.frames}}</td>
-            </tr>
-            <tr>
-              <td>generatedBy</td>
-              <td>{{metadata.generatedBy}}</td>
-            </tr>
-            <tr>
-              <td>protocolVersion</td>
-              <td>{{metadata.protocolVersion}}</td>
-            </tr>
-            <tr>
-              <td>url</td>
-              <td>{{metadata.url}}</td>
-            </tr>
-          </table>
+
+        <h4 class="modal-title">Metadata</h4>
+        <hr>
+
+        <table>
+
+          <tr>
+            <td>title</td>
+            <td>
+              <a href="#" editable-text="metadata.title">
+                {{metadata.title || 'Edit'}}
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td>description</td>
+            <td>
+              <a href="#" editable-textarea="metadata.description" e-rows="2" e-cols="40">
+                {{metadata.description || 'Edit'}}
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td>formatVersion</td>
+            <td>{{metadata.formatVersion}}</td>
+          </tr>
+          <tr>
+            <td>frameRate</td>
+            <td>{{metadata.frameRate}}</td>
+          </tr>
+          <tr>
+            <td>frames</td>
+            <td>{{metadata.frames}}</td>
+          </tr>
+          <tr>
+            <td>generatedBy</td>
+            <td>{{metadata.generatedBy}}</td>
+          </tr>
+          <tr>
+            <td>protocolVersion</td>
+            <td>{{metadata.protocolVersion}}</td>
+          </tr>
+          <tr>
+            <td>url</td>
+            <td>{{metadata.url}}</td>
+          </tr>
+        </table>
       </div>
       <!-- Usage ... todo -->
       <!-- Fork me on github -->
@@ -247,7 +256,10 @@
 
 <script>
   (window.controller = new Leap.Controller)
-    .use('playback', {loop: false})
+    .use('playback', {
+      loop: false,
+      pauseHotkey: false
+    })
     .use('riggedHand')
     .connect()
 

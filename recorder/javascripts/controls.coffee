@@ -1,7 +1,7 @@
 window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $location, $document)->
-  $scope.maxFrames = ->
+  $scope.recordingLength = ->
 #    console.log('max frames', window.controller.plugins.playback.player.maxFrames)
-    Math.max(player().maxFrames - 1, 0)
+    Math.max( player().recording.frameData.length - 1, 0 )
 
   $scope.mode = ''
   $scope.leftHandlePosition
@@ -14,14 +14,14 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
     return if newVal == oldVal
     return unless $scope.mode == 'crop'
     player().setFrameIndex(parseInt(newVal, 10))
-    player().leftCrop()
+    player().recording.leftCrop()
 
   $scope.$watch 'rightHandlePosition', (newVal, oldVal) ->
     return if newVal == oldVal  # prevents issue where newVal == 9999 on bootstrap
     return if $scope.inDigestLoop
     player().setFrameIndex(parseInt(newVal, 10))
     if $scope.mode == 'crop'
-      player().rightCrop()
+      player().recording.rightCrop()
 
   $scope.record = ->
     $scope.paused = $scope.stopOnRecordButtonClick()
@@ -59,18 +59,21 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
   $scope.crop = ->
     $scope.mode = 'crop'
     $scope.pinHandle = ''
+
     # in this particular hack, we prevent the frame from changing by having the $watch in a seperate, and flagged, digest loop.
     setTimeout ->
       $scope.inDigestLoop = true
-      $scope.leftHandlePosition = player().leftCropPosition
-      $scope.rightHandlePosition = player().rightCropPosition
+      $scope.leftHandlePosition = player().recording.leftCropPosition
+      $scope.rightHandlePosition = player().recording.rightCropPosition
       $scope.$apply()
       $scope.inDigestLoop = false
     , 0
+
     player().pause()
+
     # this hack previews the current hand position
     setTimeout(->
-      player().sendFrame(player().currentFrame())
+      player().sendFrame(player().recording.currentFrame())
     , 0)
 
   $scope.stopOnRecordButtonClick = ->
@@ -86,7 +89,7 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
     player().recordPending()
 
   $scope.recording = ->
-    player().recording()
+    player().isRecording()
 
 
   $scope.playback = ()->
@@ -134,23 +137,12 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
     $scope.inDigestLoop = true
     $scope.$apply ->
       if $scope.mode == 'playback'
-        $scope.leftHandlePosition = player().leftCropPosition
-        $scope.rightHandlePosition = player().frameIndex
+        $scope.leftHandlePosition = player().recording.leftCropPosition
+        $scope.rightHandlePosition = player().recording.frameIndex
     $scope.inDigestLoop = false
 
 
   $scope.save = (format)->
-    filename = if player().metadata.title
-      # assumes camelcase
-      player().metadata.title.replace(/\s/g, '')
-    else
-      'leap-playback-recording'
+    player().recording.save(format);
 
-    if player().metadata.frameRate
-      filename += "-#{Math.round(player().metadata.frameRate)}fps"
-
-    if format == 'json'
-      saveAs(new Blob([player().export('json')], {type: "text/JSON;charset=utf-8"}), "#{filename}.json")
-    else
-      saveAs(new Blob([player().export('lz')], {type: "text/JSON;charset=utf-8"}), "#{filename}.json.lz")
 ]
