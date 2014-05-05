@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Playback - v0.2.0 - 2014-05-03                    
+ * LeapJS Playback - v0.2.0 - 2014-05-05                    
  * http://github.com/leapmotion/leapjs-playback/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -725,8 +725,37 @@ function Recording (options){
   this.loading = false;
   this.timeBetweenLoops = options.timeBetweenLoops || 50;
 
+  // see https://github.com/leapmotion/leapjs/blob/master/Leap_JSON.rst
+  this.packingStructure = [
+    'id',
+    'timestamp',
+    // leaving out r,s,y, and gestures
+    {hands: [[
+      'id',
+      'direction',
+      'palmNormal',
+      'palmPosition',
+      'palmVelocity'
+      // leaving out r, s, t, sphereCenter, sphereRadius
+    ]]},
+    {pointables: [[
+      'direction',
+      'handId',
+      'length',
+      'stabilizedTipPosition',
+      'tipPosition',
+      'tipVelocity',
+      'tool'
+      // leaving out touchDistance, touchZone
+    ]]},
+    {interactionBox: [
+      'center', 'size'
+    ]}
+  ];
+
   this.setFrames(options.frames || [])
 }
+
 
 Recording.prototype = {
 
@@ -903,7 +932,7 @@ Recording.prototype = {
   setMetaData: function () {
 
     var newMetaData = {
-      formatVersion: 1,
+      formatVersion: 2,
       generatedBy: 'LeapJS Playback 0.1-pre',
       frames: this.rightCropPosition - this.leftCropPosition,
       protocolVersion: this.options.requestProtocolVersion,
@@ -918,16 +947,116 @@ Recording.prototype = {
     }
   },
 
-  // recording
-  pack: function(){
+  // returns an array
+  // the first item is the keys of the following items
+  // nested arrays are expected to have idententical siblings
+  packedFrameData: function(){
+    var frameData = this.croppedFrameData(),
+      packedFrames = [],
+      frameDatum;
+
+    packedFrames.push(this.packingStructure);
+
+    for (var i = 0, len = frameData.length; i < len; i++){
+      frameDatum = frameData[i];
+
+      packedFrames.push(
+        this.packArray(
+          this.packingStructure,
+          frameDatum
+        )
+      );
+
+//      debugger;
+
+    }
+
+    return packedFrames;
+  },
+
+  // recursive method
+  // creates a structure of frame data matching packing structure
+  // there may be an issue here where hands/pointables are wrapped in one more array than necessary
+  packArray: function(structure, data){
+    var out = [], nameOrHash;
+
+    for (var i = 0, len1 = structure.length; i < len1; i++){
+
+      // e.g., nameOrHash is either 'id' or {hand: [...]}
+      nameOrHash = structure[i];
+
+      if ( typeof  nameOrHash === 'string'){
+
+        out.push(
+          data[nameOrHash]
+        );
+
+      }else if (Object.prototype.toString.call(nameOrHash) == "[object Array]") {
+        var subArray = [];
+
+        for (var j = 0, len2 = data.length; j < len2; j++){
+          subArray.push(
+            this.packArray(
+              nameOrHash,
+              data[j]
+            )
+          );
+        }
+
+        out.push(subArray);
+
+      } else { // key-value (nested object)
+
+        console.assert(nameOrHash);
+
+        for (var key in nameOrHash) break;
+
+        console.assert(key);
+        console.assert(nameOrHash[key]);
+        console.assert(data[key]);
+
+        out.push(this.packArray(
+          nameOrHash[key],
+          data[key]
+        ));
+
+      }
+
+    }
+
+    return out;
+  },
+
+  // expects the first array element to describe the following arrays
+  // this algorithm copies frames to a new array
+  // could there be merit in something which would do an in-place substitution?
+  unPackFrameData: function(packedFrames){
+    var packingStructure = packedFrames[0];
+    var frameData = [],
+        frameDatum;
+
+    for (var i = 1, len = packedFrames.length; i < len; i++) {
+      frameDatum = packedFrames[i];
+      frameData.push(
+        this.unPackArray(
+          packingStructure,
+          frameDatum
+        )
+      );
+    }
+
+    return frameData;
+  },
+
+  unPackArray: function(){
 
   },
 
   toHash: function () {
     this.setMetaData();
     return {
-      frames: this.croppedFrameData(),
-      metadata: this.metadata
+      metadata: this.metadata,
+      frames: this.packedFrameData()
     }
   },
 
