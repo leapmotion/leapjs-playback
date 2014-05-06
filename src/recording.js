@@ -10,20 +10,27 @@ function Recording (options){
     // leaving out r,s,y, and gestures
     {hands: [[
       'id',
+      'type',
       'direction',
       'palmNormal',
       'palmPosition',
-      'palmVelocity'
+      'palmVelocity',
+      'stabilizedPalmPosition'
       // leaving out r, s, t, sphereCenter, sphereRadius
     ]]},
     {pointables: [[
+      'id',
       'direction',
       'handId',
       'length',
       'stabilizedTipPosition',
       'tipPosition',
       'tipVelocity',
-      'tool'
+      'tool',
+      'mcpPosition',
+      'pipPosition',
+      'dipPosition',
+      'tipPosition'
       // leaving out touchDistance, touchZone
     ]]},
     {interactionBox: [
@@ -103,11 +110,13 @@ Recording.prototype = {
 
   // this method would be well-moved to its own object/class -.-
   // for every point, lerp as appropriate
+  // note: currently hand and finger props are hard coded, but things like stabilizedPalmPosition should be optional
+  // should have this be set from the packingStructure or some such, but only for vec3s.
   createLerpFrameData: function(t){
     // http://stackoverflow.com/a/5344074/478354
     var currentFrame = this.currentFrame(),
         nextFrame = this.nextFrame(),
-        handProps = ['palmPosition', 'stabilizedPalmPosition', 'sphereCenter', 'direction', 'palmNormal', 'palmVelocity'],
+        handProps   = ['palmPosition', 'stabilizedPalmPosition', 'sphereCenter', 'direction', 'palmNormal', 'palmVelocity'],
         fingerProps = ['mcpPosition', 'pipPosition', 'dipPosition', 'tipPosition', 'direction'],
         frameData = JSON.parse(JSON.stringify(currentFrame)),
         numHands = frameData.hands.length,
@@ -120,6 +129,10 @@ Recording.prototype = {
 
       for (var j = 0; j < len1; j++){
         prop = handProps[j];
+
+        if (!currentFrame.hands[i][prop]){
+          continue;
+        }
 
         Leap.vec3.lerp(
           hand[prop],
@@ -138,6 +151,10 @@ Recording.prototype = {
 
       for ( j = 0; j < len2; j++){
         prop = fingerProps[j];
+
+        if (!currentFrame.pointables[i][prop]){
+          continue;
+        }
 
         Leap.vec3.lerp(
           pointable[prop],
@@ -211,11 +228,12 @@ Recording.prototype = {
 
     var newMetaData = {
       formatVersion: 2,
-      generatedBy: 'LeapJS Playback 0.1-pre',
+      generatedBy: 'LeapJS Playback 0.2.0',
       frames: this.rightCropPosition - this.leftCropPosition,
       protocolVersion: this.options.requestProtocolVersion,
       serviceVersion: this.options.serviceVersion,
-      frameRate: this.frameRate().toPrecision(2)
+      frameRate: this.frameRate().toPrecision(2),
+      modified: (new Date).toString()
     };
 
     this.metadata || (this.metadata = {});
@@ -245,8 +263,6 @@ Recording.prototype = {
         )
       );
 
-//      debugger;
-
     }
 
     return packedFrames;
@@ -270,10 +286,10 @@ Recording.prototype = {
         );
 
       }else if (Object.prototype.toString.call(nameOrHash) == "[object Array]") {
-        var subArray = [];
+        // nested array, such as hands or fingers
 
         for (var j = 0, len2 = data.length; j < len2; j++){
-          subArray.push(
+          out.push(
             this.packArray(
               nameOrHash,
               data[j]
@@ -281,9 +297,7 @@ Recording.prototype = {
           );
         }
 
-        out.push(subArray);
-
-      } else { // key-value (nested object)
+      } else { // key-value (nested object) such as interactionBox
 
         console.assert(nameOrHash);
 
@@ -321,13 +335,83 @@ Recording.prototype = {
           frameDatum
         )
       );
+
     }
 
     return frameData;
   },
 
-  unPackArray: function(){
+  // data is a frame or subset of frame
+  // returns a frame object
+  // this is the structure of the array
+  // gets unfolded to key-value pairs
+  // e.g.:
+  //  this.packingStructure = [
+  //    'id',
+  //    'timestamp',
+  //    {hands: [[
+  //      'id',
+  //      'direction',
+  //      'palmNormal',
+  //      'palmPosition',
+  //      'palmVelocity'
+  //    ]]},
+  //    {pointables: [[
+  //      'direction',
+  //      'handId',
+  //      'length',
+  //      'stabilizedTipPosition',
+  //      'tipPosition',
+  //      'tipVelocity',
+  //      'tool'
+  //    ]]},
+  //    {interactionBox: [
+  //      'center', 'size'
+  //    ]}
+  //  ];
+  unPackArray: function(structure, data){
+    var out = {}, nameOrHash;
 
+    for (var i = 0, len1 = structure.length; i < len1; i++){
+
+     // e.g., nameOrHash is either 'id' or {hand: [...]}
+     nameOrHash = structure[i];
+
+     if ( typeof  nameOrHash === 'string'){
+
+       out[nameOrHash] = data[i];
+
+     }else if (Object.prototype.toString.call(nameOrHash) == "[object Array]") {
+       // nested array, such as hands or fingers
+       // nameOrHash ["id", "direction", "palmNormal", "palmPosition", "palmVelocity"]
+       // data [ [ 31, [vec3], [vec3], ...] ]
+
+       var subArray = [];
+
+       for (var j = 0, len2 = data.length; j < len2; j++){
+         subArray.push(
+           this.unPackArray(
+             nameOrHash,
+             data[j]
+           )
+         );
+       }
+       return subArray;
+
+     } else { // key-value (nested object) such as interactionBox
+
+       for (var key in nameOrHash) break;
+
+       out[key] = this.unPackArray(
+         nameOrHash[key],
+         data[i]
+       );
+
+     }
+
+    }
+
+    return out;
   },
 
   toHash: function () {
@@ -374,7 +458,7 @@ Recording.prototype = {
   },
 
   decompress: function (data) {
-    return LZString.decompressFromBase64(data)
+    return LZString.decompressFromBase64(data);
   },
 
   loaded: function(){
@@ -427,8 +511,14 @@ Recording.prototype = {
 
     responseData = JSON.parse(responseData);
 
+    if (responseData.metadata.formatVersion == 2) {
+      responseData.frames = this.unPackFrameData(responseData.frames);
+    }
+
     this.setFrames(responseData.frames);
     this.metadata = responseData.metadata;
+
+    console.log('Recording loaded:', this.metadata);
 
 //            for (var key in responseData) {
 //              recording[key] = responseData[key]
