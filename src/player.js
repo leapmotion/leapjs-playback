@@ -226,6 +226,7 @@
 
     // if there is existing frame data, sends a frame with nothing in it
     clear: function () {
+      if (!this.recording || this.recording.blank()) return;
       var finalFrame = this.recording.currentFrame();
       finalFrame.hands = [];
       finalFrame.fingers = [];
