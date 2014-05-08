@@ -487,9 +487,9 @@ Recording.prototype = {
   // optional callback once frames are loaded, will have a context of player
   loadFrameData: function (callback) {
     var xhr = new XMLHttpRequest(),
-        url = this.url;
-
-    var recording = this;
+        url = this.url,
+        recording = this,
+        contentLength = 0;
 
     xhr.onreadystatechange = function () {
       if (xhr.readyState === xhr.DONE) {
@@ -506,6 +506,20 @@ Recording.prototype = {
         }
       }
     };
+
+    xhr.addEventListener('progress', function(oEvent){
+
+      if ( recording.options.loadProgress ) {
+
+        if (oEvent.lengthComputable) {
+          var percentComplete = oEvent.loaded / oEvent.total;
+          recording.options.loadProgress( percentComplete );
+        }
+
+      }
+
+    });
+
     this.loading = true;
 
     xhr.open("GET", url, true);

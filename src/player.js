@@ -344,7 +344,10 @@
         this.recording.__proto__ = Recording.prototype;
         Recording.call(this.recording, {
           timeBetweenLoops: this.options.timeBetweenLoops,
-          loop:             this.options.loop
+          loop:             this.options.loop,
+          loadProgress: function(data){
+            player.controller.emit('playback.loading', data);
+          }
         });
 
       }
