@@ -7,6 +7,7 @@ function Recording (options){
   this.packingStructure = [
     'id',
     'timestamp',
+    // this should be replace/upgraded with a whitelist instead of a blacklist.
     // leaving out r,s,y, and gestures
     {hands: [[
       'id',
@@ -15,7 +16,10 @@ function Recording (options){
       'palmNormal',
       'palmPosition',
       'palmVelocity',
-      'stabilizedPalmPosition'
+      'stabilizedPalmPosition',
+      'pinchStrength',
+      'grabStrength',
+      'confidence'
       // leaving out r, s, t, sphereCenter, sphereRadius
     ]]},
     {pointables: [[
