@@ -25,6 +25,9 @@ controller
 
 ## Examples
 
-`test/plugin/index.html` uses the LeapJS Skeleton to show a demo hand recording.
+`index.html` Bare-bones usage.
 
+`recorder/index.html` Recorder tool which uses the plugin.  (AngularJS, CoffeeScript)
+
+See [the wiki](https://github.com/leapmotion/leapjs-playback/wiki/Format-Spec) for details on the output format.
 
