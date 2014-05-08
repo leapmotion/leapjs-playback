@@ -835,6 +835,10 @@ Recording.prototype = {
     }
   },
 
+  cloneCurrentFrame: function(){
+    return JSON.parse(JSON.stringify(this.currentFrame()));
+  },
+
 
   // this method would be well-moved to its own object/class -.-
   // for every point, lerp as appropriate
@@ -846,8 +850,9 @@ Recording.prototype = {
         nextFrame = this.nextFrame(),
         handProps   = ['palmPosition', 'stabilizedPalmPosition', 'sphereCenter', 'direction', 'palmNormal', 'palmVelocity'],
         fingerProps = ['mcpPosition', 'pipPosition', 'dipPosition', 'tipPosition', 'direction'],
-        frameData = JSON.parse(JSON.stringify(currentFrame)),
+        frameData = this.cloneCurrentFrame(),
         numHands = frameData.hands.length,
+        numPointables = frameData.pointables.length,
         len1 = handProps.length,
         len2 = fingerProps.length,
         prop, hand, pointable;
@@ -878,7 +883,7 @@ Recording.prototype = {
 
     }
 
-    for ( i = 0; i < 5; i++){
+    for ( i = 0; i < numPointables; i++){
       pointable = frameData.pointables[i];
 
       for ( j = 0; j < len2; j++){
@@ -997,7 +1002,6 @@ Recording.prototype = {
           frameDatum
         )
       );
-      debugger
 
     }
 
@@ -1205,7 +1209,7 @@ Recording.prototype = {
   // optional callback once frames are loaded, will have a context of player
   loadFrameData: function (callback) {
     var xhr = new XMLHttpRequest(),
-        url = this.options.url;
+        url = this.url;
 
     var recording = this;
 
@@ -1239,7 +1243,7 @@ Recording.prototype = {
 //
 //    // can't assign to responseText
 //    var responseData = xhr.responseText;
-    var url = this.options.url;
+    var url = this.url;
 
     if (url.split('.')[url.split('.').length - 1] == 'lz') {
       responseData = this.decompress(responseData);
@@ -1498,7 +1502,7 @@ Recording.prototype = {
     // if there is existing frame data, sends a frame with nothing in it
     clear: function () {
       if (!this.recording || this.recording.blank()) return;
-      var finalFrame = this.recording.currentFrame();
+      var finalFrame = this.recording.cloneCurrentFrame();
       finalFrame.hands = [];
       finalFrame.fingers = [];
       finalFrame.pointables = [];
@@ -1599,18 +1603,18 @@ Recording.prototype = {
         player.controller.emit('playback.recordingSet', this);
       };
 
-      if (options instanceof Recording){
+      this.recording = options;
 
-        console.log('recording given');
-        this.recording = options;
+      // Here we turn the existing argument in to a recording
+      // this allows frames to be added to the existing object via ajax
+      // saving ajax requests
+      if (!(options instanceof Recording)){
 
-      }else{
-
-        options.timeBetweenLoops = this.options.timeBetweenLoops;
-        options.loop = this.options.loop;
-
-        this.recording = new Recording(options);
-
+        this.recording.__proto__ = Recording.prototype;
+        Recording.call(this.recording, {
+          timeBetweenLoops: this.options.timeBetweenLoops,
+          loop:             this.options.loop
+        });
 
       }
 

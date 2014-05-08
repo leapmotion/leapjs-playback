@@ -113,6 +113,10 @@ Recording.prototype = {
     }
   },
 
+  cloneCurrentFrame: function(){
+    return JSON.parse(JSON.stringify(this.currentFrame()));
+  },
+
 
   // this method would be well-moved to its own object/class -.-
   // for every point, lerp as appropriate
@@ -124,7 +128,7 @@ Recording.prototype = {
         nextFrame = this.nextFrame(),
         handProps   = ['palmPosition', 'stabilizedPalmPosition', 'sphereCenter', 'direction', 'palmNormal', 'palmVelocity'],
         fingerProps = ['mcpPosition', 'pipPosition', 'dipPosition', 'tipPosition', 'direction'],
-        frameData = JSON.parse(JSON.stringify(currentFrame)),
+        frameData = this.cloneCurrentFrame(),
         numHands = frameData.hands.length,
         numPointables = frameData.pointables.length,
         len1 = handProps.length,
