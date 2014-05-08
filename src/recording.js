@@ -134,6 +134,10 @@ Recording.prototype = {
           continue;
         }
 
+        if (!nextFrame.hands[i]){
+          continue;
+        }
+
         Leap.vec3.lerp(
           hand[prop],
           currentFrame.hands[i][prop],
@@ -153,6 +157,10 @@ Recording.prototype = {
         prop = fingerProps[j];
 
         if (!currentFrame.pointables[i][prop]){
+          continue;
+        }
+
+        if (!nextFrame.hands[i]){
           continue;
         }
 
@@ -223,7 +231,6 @@ Recording.prototype = {
   },
 
 
-  // flag
   setMetaData: function () {
 
     var newMetaData = {

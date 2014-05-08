@@ -55,11 +55,6 @@
 
         player.sendFrameAt(timestamp || performance.now());
 
-        // flag - removed currentFrameIndex
-//        if (!player.options.loop && (player.currentFrameIndex > player.frameIndex)) {
-//          player.pause();
-//        }
-
         requestAnimationFrame(player.stepFrameLoop);
       };
 
@@ -159,7 +154,6 @@
 
     },
 
-    // flag
     sendFrame: function(frameData){
       if (!frameData) throw "Frame data not provided";
 
