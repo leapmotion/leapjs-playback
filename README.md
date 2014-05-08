@@ -29,4 +29,5 @@ controller
 
 `recorder/index.html` Recorder tool which uses the plugin.  (AngularJS, CoffeeScript)
 
+See [the wiki](https://github.com/leapmotion/leapjs-playback/wiki/Format-Spec) for details on the output format.
 
