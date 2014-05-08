@@ -31,10 +31,12 @@ function Recording (options){
       'tipPosition',
       'tipVelocity',
       'tool',
+      'carpPosition',
       'mcpPosition',
       'pipPosition',
       'dipPosition',
-      'tipPosition'
+      'btipPosition',
+      'bases'
       // leaving out touchDistance, touchZone
     ]]},
     {interactionBox: [

@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Playback - v0.2.0 - 2014-05-05                    
+ * LeapJS Playback - v0.2.0 - 2014-05-07                    
  * http://github.com/leapmotion/leapjs-playback/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -729,6 +729,7 @@ function Recording (options){
   this.packingStructure = [
     'id',
     'timestamp',
+    // this should be replace/upgraded with a whitelist instead of a blacklist.
     // leaving out r,s,y, and gestures
     {hands: [[
       'id',
@@ -737,7 +738,10 @@ function Recording (options){
       'palmNormal',
       'palmPosition',
       'palmVelocity',
-      'stabilizedPalmPosition'
+      'stabilizedPalmPosition',
+      'pinchStrength',
+      'grabStrength',
+      'confidence'
       // leaving out r, s, t, sphereCenter, sphereRadius
     ]]},
     {pointables: [[
@@ -749,10 +753,12 @@ function Recording (options){
       'tipPosition',
       'tipVelocity',
       'tool',
+      'carpPosition',
       'mcpPosition',
       'pipPosition',
       'dipPosition',
-      'tipPosition'
+      'btipPosition',
+      'bases'
       // leaving out touchDistance, touchZone
     ]]},
     {interactionBox: [
@@ -856,6 +862,10 @@ Recording.prototype = {
           continue;
         }
 
+        if (!nextFrame.hands[i]){
+          continue;
+        }
+
         Leap.vec3.lerp(
           hand[prop],
           currentFrame.hands[i][prop],
@@ -875,6 +885,10 @@ Recording.prototype = {
         prop = fingerProps[j];
 
         if (!currentFrame.pointables[i][prop]){
+          continue;
+        }
+
+        if (!nextFrame.hands[i]){
           continue;
         }
 
@@ -945,7 +959,6 @@ Recording.prototype = {
   },
 
 
-  // flag
   setMetaData: function () {
 
     var newMetaData = {
@@ -984,6 +997,7 @@ Recording.prototype = {
           frameDatum
         )
       );
+      debugger
 
     }
 
@@ -1312,11 +1326,6 @@ Recording.prototype = {
 
         player.sendFrameAt(timestamp || performance.now());
 
-        // flag - removed currentFrameIndex
-//        if (!player.options.loop && (player.currentFrameIndex > player.frameIndex)) {
-//          player.pause();
-//        }
-
         requestAnimationFrame(player.stepFrameLoop);
       };
 
@@ -1416,7 +1425,6 @@ Recording.prototype = {
 
     },
 
-    // flag
     sendFrame: function(frameData){
       if (!frameData) throw "Frame data not provided";
 
@@ -1489,6 +1497,7 @@ Recording.prototype = {
 
     // if there is existing frame data, sends a frame with nothing in it
     clear: function () {
+      if (!this.recording || this.recording.blank()) return;
       var finalFrame = this.recording.currentFrame();
       finalFrame.hands = [];
       finalFrame.fingers = [];
