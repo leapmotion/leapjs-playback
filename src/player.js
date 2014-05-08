@@ -195,7 +195,7 @@
       // todo: we should change this idle state to paused or leave it as playback with a pause flag
       // state should correspond always to protocol handler (through a setter)?
       this.state = 'idle';
-      if (this.overlay) this.hideOverlay();
+      this.hideOverlay();
       this.controller.emit('playback.pause', this);
     },
 
@@ -300,10 +300,10 @@
       // Would be better to check controller.streaming() in showOverlay, but that method doesn't exist, yet.
       this.setGraphic('wave');
       if (frameData.hands.length > 0) {
-        this.recording.addFrame(frameData)
-        this.hideOverlay()
+        this.recording.addFrame(frameData);
+        this.hideOverlay();
       } else if ( !this.recording.blank() ) {
-        this.finishRecording()
+        this.finishRecording();
       }
     },
 
@@ -374,12 +374,14 @@
 
 
     hideOverlay: function () {
+      if (!this.overlay) return;
       this.overlay.style.display = 'none';
     },
 
 
     // Accepts either "connect", "wave", or undefined.
     setGraphic: function (graphicName) {
+      if (!this.overlay) return;
       if (this.graphicName == graphicName) return;
 
       this.graphicName = graphicName;
