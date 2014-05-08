@@ -482,7 +482,7 @@ Recording.prototype = {
   // optional callback once frames are loaded, will have a context of player
   loadFrameData: function (callback) {
     var xhr = new XMLHttpRequest(),
-        url = this.options.url;
+        url = this.url;
 
     var recording = this;
 
@@ -516,7 +516,7 @@ Recording.prototype = {
 //
 //    // can't assign to responseText
 //    var responseData = xhr.responseText;
-    var url = this.options.url;
+    var url = this.url;
 
     if (url.split('.')[url.split('.').length - 1] == 'lz') {
       responseData = this.decompress(responseData);

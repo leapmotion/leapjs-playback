@@ -328,18 +328,18 @@
         player.controller.emit('playback.recordingSet', this);
       };
 
-      if (options instanceof Recording){
+      this.recording = options;
 
-        console.log('recording given');
-        this.recording = options;
+      // Here we turn the existing argument in to a recording
+      // this allows frames to be added to the existing object via ajax
+      // saving ajax requests
+      if (!(options instanceof Recording)){
 
-      }else{
-
-        options.timeBetweenLoops = this.options.timeBetweenLoops;
-        options.loop = this.options.loop;
-
-        this.recording = new Recording(options);
-
+        this.recording.__proto__ = Recording.prototype;
+        Recording.call(this.recording, {
+          timeBetweenLoops: this.options.timeBetweenLoops,
+          loop:             this.options.loop
+        });
 
       }
 
