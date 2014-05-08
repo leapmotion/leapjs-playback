@@ -126,6 +126,7 @@ Recording.prototype = {
         fingerProps = ['mcpPosition', 'pipPosition', 'dipPosition', 'tipPosition', 'direction'],
         frameData = JSON.parse(JSON.stringify(currentFrame)),
         numHands = frameData.hands.length,
+        numPointables = frameData.pointables.length,
         len1 = handProps.length,
         len2 = fingerProps.length,
         prop, hand, pointable;
@@ -156,7 +157,7 @@ Recording.prototype = {
 
     }
 
-    for ( i = 0; i < 5; i++){
+    for ( i = 0; i < numPointables; i++){
       pointable = frameData.pointables[i];
 
       for ( j = 0; j < len2; j++){
