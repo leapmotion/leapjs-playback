@@ -513,14 +513,7 @@ Recording.prototype = {
   },
 
   finishLoad: function(responseData, callback){
-//    if (player.recording != recording){
-//      // setRecording has been re-called before the ajax has returned
-//      player.controller.emit('playback.ajax:aborted', player);
-//      return
-//    }
-//
-//    // can't assign to responseText
-//    var responseData = xhr.responseText;
+
     var url = this.url;
 
     if (url.split('.')[url.split('.').length - 1] == 'lz') {
@@ -533,19 +526,14 @@ Recording.prototype = {
       responseData.frames = this.unPackFrameData(responseData.frames);
     }
 
-    this.setFrames(responseData.frames);
     this.metadata = responseData.metadata;
 
     console.log('Recording loaded:', this.metadata);
 
-//            for (var key in responseData) {
-//              recording[key] = responseData[key]
-//            }
-
     this.loading = false;
 
     if (callback) {
-      callback.call(this);
+      callback.call(this, responseData.frames);
     }
 
   }
