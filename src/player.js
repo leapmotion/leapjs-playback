@@ -19,6 +19,8 @@
       player.setupProtocols();
     });
 
+    this.userHasControl = false;
+
 
     if (options.recording) {
       // string check via underscore.js
@@ -76,10 +78,17 @@
 
           if (player.pauseOnHand) {
             if (data.hands.length > 0) {
+              player.userHasControl = true;
+              player.controller.emit('playback.userTakeControl');
               player.setGraphic();
               player.idle();
             } else if (data.hands.length == 0) {
-              player.setGraphic('wave');
+              if (player.userHasControl) {
+                player.userHasControl = false;
+                player.controller.emit('playback.userReleaseControl');
+                player.setGraphic('wave');
+              }
+
             }
           }
 
