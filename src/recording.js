@@ -513,7 +513,7 @@ Recording.prototype = {
 
         if (oEvent.lengthComputable) {
           var percentComplete = oEvent.loaded / oEvent.total;
-          recording.options.loadProgress( percentComplete );
+          recording.options.loadProgress( recording, percentComplete, oEvent );
         }
 
       }

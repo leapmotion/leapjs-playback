@@ -317,9 +317,15 @@
       // otherwise, the animation loop may try and play non-existant frames:
       this.pause();
 
+      // this is called on the context of the recording
       var loadComplete = function (frames) {
 
         this.setFrames(frames);
+
+        if (player.recording != this){
+          console.log('recordings changed during load');
+          return
+        }
 
         // it would be better to use streamingCount here, but that won't be in until 0.5.0+
         // For now, it just flashes for a moment until the first frame comes through with a hand on it.
@@ -345,8 +351,8 @@
         Recording.call(this.recording, {
           timeBetweenLoops: this.options.timeBetweenLoops,
           loop:             this.options.loop,
-          loadProgress: function(data){
-            player.controller.emit('playback.loading', data);
+          loadProgress: function(recording, percentage, oEvent){
+            player.controller.emit('playback.ajax:progress', recording, percentage, oEvent);
           }
         });
 
@@ -359,11 +365,12 @@
 
       } else if (options.url) {
 
-        player.controller.emit('playback.ajax:begin', player);
+        this.controller.emit('playback.ajax:begin', this, this.recording);
 
+        // called in the context of the recording
         this.recording.loadFrameData(function(frames){
           loadComplete.call(this, frames);
-          player.controller.emit('playback.ajax:complete', player);
+          player.controller.emit('playback.ajax:complete', player, this);
         });
 
       }
