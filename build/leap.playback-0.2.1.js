@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Playback - v0.2.0 - 2014-05-07                    
+ * LeapJS Playback - v0.2.1 - 2014-05-12                    
  * http://github.com/leapmotion/leapjs-playback/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -1235,7 +1235,7 @@ Recording.prototype = {
 
         if (oEvent.lengthComputable) {
           var percentComplete = oEvent.loaded / oEvent.total;
-          recording.options.loadProgress( percentComplete );
+          recording.options.loadProgress( recording, percentComplete, oEvent );
         }
 
       }
@@ -1296,6 +1296,8 @@ Recording.prototype = {
       player.setupProtocols();
     });
 
+    this.userHasControl = false;
+
 
     if (options.recording) {
       // string check via underscore.js
@@ -1353,10 +1355,17 @@ Recording.prototype = {
 
           if (player.pauseOnHand) {
             if (data.hands.length > 0) {
+              player.userHasControl = true;
+              player.controller.emit('playback.userTakeControl');
               player.setGraphic();
               player.idle();
             } else if (data.hands.length == 0) {
-              player.setGraphic('wave');
+              if (player.userHasControl) {
+                player.userHasControl = false;
+                player.controller.emit('playback.userReleaseControl');
+                player.setGraphic('wave');
+              }
+
             }
           }
 
@@ -1472,7 +1481,7 @@ Recording.prototype = {
       // todo: we should change this idle state to paused or leave it as playback with a pause flag
       // state should correspond always to protocol handler (through a setter)?
       this.state = 'idle';
-      if (this.overlay) this.hideOverlay();
+      this.hideOverlay();
       this.controller.emit('playback.pause', this);
     },
 
@@ -1577,10 +1586,10 @@ Recording.prototype = {
       // Would be better to check controller.streaming() in showOverlay, but that method doesn't exist, yet.
       this.setGraphic('wave');
       if (frameData.hands.length > 0) {
-        this.recording.addFrame(frameData)
-        this.hideOverlay()
+        this.recording.addFrame(frameData);
+        this.hideOverlay();
       } else if ( !this.recording.blank() ) {
-        this.finishRecording()
+        this.finishRecording();
       }
     },
 
@@ -1594,9 +1603,15 @@ Recording.prototype = {
       // otherwise, the animation loop may try and play non-existant frames:
       this.pause();
 
+      // this is called on the context of the recording
       var loadComplete = function (frames) {
 
         this.setFrames(frames);
+
+        if (player.recording != this){
+          console.log('recordings changed during load');
+          return
+        }
 
         // it would be better to use streamingCount here, but that won't be in until 0.5.0+
         // For now, it just flashes for a moment until the first frame comes through with a hand on it.
@@ -1622,8 +1637,8 @@ Recording.prototype = {
         Recording.call(this.recording, {
           timeBetweenLoops: this.options.timeBetweenLoops,
           loop:             this.options.loop,
-          loadProgress: function(data){
-            player.controller.emit('playback.loading', data);
+          loadProgress: function(recording, percentage, oEvent){
+            player.controller.emit('playback.ajax:progress', recording, percentage, oEvent);
           }
         });
 
@@ -1636,11 +1651,12 @@ Recording.prototype = {
 
       } else if (options.url) {
 
-        player.controller.emit('playback.ajax:begin', player);
+        this.controller.emit('playback.ajax:begin', this, this.recording);
 
+        // called in the context of the recording
         this.recording.loadFrameData(function(frames){
           loadComplete.call(this, frames);
-          player.controller.emit('playback.ajax:complete', player);
+          player.controller.emit('playback.ajax:complete', player, this);
         });
 
       }
@@ -1651,12 +1667,14 @@ Recording.prototype = {
 
 
     hideOverlay: function () {
+      if (!this.overlay) return;
       this.overlay.style.display = 'none';
     },
 
 
     // Accepts either "connect", "wave", or undefined.
     setGraphic: function (graphicName) {
+      if (!this.overlay) return;
       if (this.graphicName == graphicName) return;
 
       this.graphicName = graphicName;

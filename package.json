@@ -1,8 +1,8 @@
 {
   "name": "leapjs-playack",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Record and Play back Leap data",
-  "main": "leapjs-playback-0.2.0.js",
+  "main": "leapjs-playback-0.2.1.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/leapmotion/leapjs-playback.git"
