@@ -175,6 +175,17 @@
       return true
     },
 
+    sendImmediateFrame: function(frameData){
+      if (!frameData) throw "Frame data not provided";
+
+      var frame = new Leap.Frame(frameData);
+
+      // sends an animation frame to the controller
+
+      this.controller.processFinishedFrame(frame);
+      return true
+    },
+
     setFrameIndex: function (frameIndex) {
       if (frameIndex != this.recording.frameIndex) {
         this.recording.frameIndex = frameIndex % this.recording.frameCount;
@@ -241,7 +252,7 @@
       finalFrame.fingers = [];
       finalFrame.pointables = [];
       finalFrame.tools = [];
-      this.sendFrame(finalFrame)
+      this.sendImmediateFrame(finalFrame);
     },
 
     recordPending: function () {
@@ -276,7 +287,7 @@
      */
     play: function () {
       if (this.state === 'playing') return;
-      if ( this.loading() ) return;
+      if ( this.loading() || this.recording.blank() ) return;
 
       this.state = 'playing';
       this.controller.connection.protocol = this.playbackProtocol;

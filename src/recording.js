@@ -36,7 +36,8 @@ function Recording (options){
       'pipPosition',
       'dipPosition',
       'btipPosition',
-      'bases'
+      'bases',
+      'type'
       // leaving out touchDistance, touchZone
     ]]},
     {interactionBox: [

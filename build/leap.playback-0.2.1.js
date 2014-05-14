@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Playback - v0.2.1 - 2014-05-12                    
+ * LeapJS Playback - v0.2.1 - 2014-05-14                    
  * http://github.com/leapmotion/leapjs-playback/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -758,7 +758,8 @@ function Recording (options){
       'pipPosition',
       'dipPosition',
       'btipPosition',
-      'bases'
+      'bases',
+      'type'
       // leaving out touchDistance, touchZone
     ]]},
     {interactionBox: [
@@ -1452,6 +1453,17 @@ Recording.prototype = {
       return true
     },
 
+    sendImmediateFrame: function(frameData){
+      if (!frameData) throw "Frame data not provided";
+
+      var frame = new Leap.Frame(frameData);
+
+      // sends an animation frame to the controller
+
+      this.controller.processFinishedFrame(frame);
+      return true
+    },
+
     setFrameIndex: function (frameIndex) {
       if (frameIndex != this.recording.frameIndex) {
         this.recording.frameIndex = frameIndex % this.recording.frameCount;
@@ -1518,7 +1530,7 @@ Recording.prototype = {
       finalFrame.fingers = [];
       finalFrame.pointables = [];
       finalFrame.tools = [];
-      this.sendFrame(finalFrame)
+      this.sendImmediateFrame(finalFrame);
     },
 
     recordPending: function () {
@@ -1553,7 +1565,7 @@ Recording.prototype = {
      */
     play: function () {
       if (this.state === 'playing') return;
-      if ( this.loading() ) return;
+      if ( this.loading() || this.recording.blank() ) return;
 
       this.state = 'playing';
       this.controller.connection.protocol = this.playbackProtocol;
