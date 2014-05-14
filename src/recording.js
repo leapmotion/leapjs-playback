@@ -221,7 +221,6 @@ Recording.prototype = {
   // Accepts an optional `factor` integer, which is the number of frames
   // discarded for every frame kept.
   cullFrames: function (factor) {
-    console.log('cull frames', factor);
     factor || (factor = 1);
     for (var i = 0; i < this.frameData.length; i++) {
       this.frameData.splice(i, factor);
@@ -542,8 +541,6 @@ Recording.prototype = {
     }
 
     this.metadata = responseData.metadata;
-
-    console.log('Recording loaded:', this.metadata);
 
     this.loading = false;
 
