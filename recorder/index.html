@@ -258,10 +258,11 @@
   (window.controller = new Leap.Controller)
     .use('playback', {
       loop: false,
-      pauseHotkey: false
+      pauseHotkey: false,
+      pauseOnHand: false
     })
     .use('riggedHand')
-    .connect()
+    .connect();
 
 
 //  controls = new THREE.TrackballControls( window.controller.plugins.riggedHand.camera )
