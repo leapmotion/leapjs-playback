@@ -1,12 +1,13 @@
+# note that there a couple of times where $scope.$$phase is checked -- some severe code smell
+# it would be better to perhaps provide leap as a resource, and make things more proper.
+
 window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $location, $document)->
   $scope.recordingLength = ->
-#    console.log('max frames', window.controller.plugins.playback.player.maxFrames)
     Math.max( player().recording.frameData.length - 1, 0 )
 
   $scope.mode = ''
   $scope.leftHandlePosition
   $scope.rightHandlePosition
-  $scope.paused = false
   $scope.inDigestLoop = false
   $scope.pinHandle = ''
 
@@ -23,9 +24,18 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
     if $scope.mode == 'crop'
       player().recording.rightCrop()
 
+  $scope.$watch 'mode', (newVal, oldVal)->
+    # remove depressed button states
+    unless newVal == 'record'
+      document.getElementById('record').blur()
+    unless newVal == 'crop'
+      document.getElementById('crop').blur()
+
   $scope.record = ->
-    $scope.paused = $scope.stopOnRecordButtonClick()
-    if $scope.paused then player().finishRecording() else player().record()
+    if player().state == 'recording' && !player().recordPending()
+      player().finishRecording()
+    else
+      player().record()
 
   window.controller
 
@@ -47,12 +57,11 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
 
   ).on( 'playback.recordingFinished', ->
     if player().loaded()
+      # this appears to cause playback
       $scope.crop()
-    # remove depressed button state on record button -.-
-    document.getElementById('record').blur()
 
   ).on( 'playback.playbackFinished', ->
-    $scope.paused = true
+    # why?
     $scope.$apply()
   )
 
@@ -60,7 +69,7 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
     $scope.mode = 'crop'
     $scope.pinHandle = ''
 
-    # in this particular hack, we prevent the frame from changing by having the $watch in a seperate, and flagged, digest loop.
+    # in this particular hack, we prevent the frame from changing by having the $watch in a separate, and flagged, digest loop.
     setTimeout ->
       $scope.inDigestLoop = true
       $scope.leftHandlePosition = player().recording.leftCropPosition
@@ -76,11 +85,8 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
       player().sendFrame(player().recording.currentFrame())
     , 0)
 
-  $scope.stopOnRecordButtonClick = ->
-    $scope.mode == 'record' && !$scope.paused
-
   $scope.pauseOnPlaybackButtonClick = ->
-    $scope.mode == 'playback' && !$scope.paused
+    $scope.mode == 'playback' && player().state != 'idle'
 
   $scope.canPlayBack = ->
     !player().loaded()
@@ -125,6 +131,7 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
       when 47, 63
         $('#helpModal').modal('show')
       when 27 # esc
+        console.log 'esc'
         $('#helpModal').modal('hide')
         $('#metadata').modal('hide')
       when 109
@@ -134,6 +141,10 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
 
 
   window.controller.on 'frame', (frame)->
+    if $scope.$$phase
+      console.warn 'Oops, already applying.'
+      return
+
     $scope.inDigestLoop = true
     $scope.$apply ->
       if $scope.mode == 'playback'

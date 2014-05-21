@@ -7,7 +7,6 @@
       $scope.mode = '';
       $scope.leftHandlePosition;
       $scope.rightHandlePosition;
-      $scope.paused = false;
       $scope.inDigestLoop = false;
       $scope.pinHandle = '';
       $scope.$watch('leftHandlePosition', function(newVal, oldVal) {
@@ -32,9 +31,16 @@
           return player().recording.rightCrop();
         }
       });
+      $scope.$watch('mode', function(newVal, oldVal) {
+        if (newVal !== 'record') {
+          document.getElementById('record').blur();
+        }
+        if (newVal !== 'crop') {
+          return document.getElementById('crop').blur();
+        }
+      });
       $scope.record = function() {
-        $scope.paused = $scope.stopOnRecordButtonClick();
-        if ($scope.paused) {
+        if (player().state === 'recording' && !player().recordPending()) {
           return player().finishRecording();
         } else {
           return player().record();
@@ -55,11 +61,9 @@
         }
       }).on('playback.recordingFinished', function() {
         if (player().loaded()) {
-          $scope.crop();
+          return $scope.crop();
         }
-        return document.getElementById('record').blur();
       }).on('playback.playbackFinished', function() {
-        $scope.paused = true;
         return $scope.$apply();
       });
       $scope.crop = function() {
@@ -77,11 +81,8 @@
           return player().sendFrame(player().recording.currentFrame());
         }, 0);
       };
-      $scope.stopOnRecordButtonClick = function() {
-        return $scope.mode === 'record' && !$scope.paused;
-      };
       $scope.pauseOnPlaybackButtonClick = function() {
-        return $scope.mode === 'playback' && !$scope.paused;
+        return $scope.mode === 'playback' && player().state !== 'idle';
       };
       $scope.canPlayBack = function() {
         return !player().loaded();
@@ -128,6 +129,7 @@
           case 63:
             return $('#helpModal').modal('show');
           case 27:
+            console.log('esc');
             $('#helpModal').modal('hide');
             return $('#metadata').modal('hide');
           case 109:
@@ -137,6 +139,10 @@
         }
       });
       window.controller.on('frame', function(frame) {
+        if ($scope.$$phase) {
+          console.warn('Oops, already applying.');
+          return;
+        }
         $scope.inDigestLoop = true;
         $scope.$apply(function() {
           if ($scope.mode === 'playback') {
