@@ -42,18 +42,14 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
 
   window.controller
 
-   .on( 'playback.record', (player)->
+   .on( 'playback.record', ->
     $scope.mode = 'record'
 
-  ).on( 'playback.play', (player)->
+  ).on( 'playback.play', ->
     $scope.pinHandle = 'min'
     $scope.mode = 'playback'
-    $scope.pause = false
 
-  ).on( 'playback.pause', (player)->
-    $scope.pause = true
-
-  ).on( 'playback.ajax:begin', (player)->
+  ).on( 'playback.ajax:begin', ->
     $scope.playback()
     # note, this is an anti-pattern https://github.com/angular/angular.js/wiki/Anti-Patterns
     $scope.$apply() unless ($scope.$$phase)
