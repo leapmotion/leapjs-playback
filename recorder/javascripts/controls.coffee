@@ -64,9 +64,17 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
     $scope.$apply()
   )
 
+
   $scope.crop = ->
+    if $scope.mode == 'record'
+      # same as .finishRecording(), but won't fire event
+      player().recording.setFrames(player().recording.frameData);
+
     $scope.mode = 'crop'
     $scope.pinHandle = ''
+
+    # block frames from coming from the leap
+    player().playbackMode()
 
     # in this particular hack, we prevent the frame from changing by having the $watch in a separate, and flagged, digest loop.
     setTimeout ->
@@ -76,8 +84,6 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
       $scope.$apply()
       $scope.inDigestLoop = false
     , 0
-
-    player().pause()
 
     # this hack previews the current hand position
     setTimeout(->
@@ -98,6 +104,10 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
 
 
   $scope.playback = ()->
+    if $scope.mode == 'record'
+      # same as .finishRecording(), but won't fire event
+      player().recording.setFrames(player().recording.frameData);
+
     player().toggle()
 
 
