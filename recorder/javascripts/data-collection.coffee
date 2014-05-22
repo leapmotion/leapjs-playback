@@ -3,7 +3,7 @@ window.recorder.controller 'DataCollection', ['$scope', ($scope)->
   # these get filled out later by the player as it loads frame data
   $scope.recordings = [
     {
-      url: 'recordings/PinchGesture-57fps.json.lz'
+      url: 'recordings/pinch-57fps.json.lz'
     },
     {
       url: 'recordings/HandSplay-110fps.json.lz'

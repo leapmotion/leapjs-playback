@@ -23,10 +23,9 @@
   <script src="javascripts/lib/three.min.js"></script>
   <script src="javascripts/lib/TrackballControls.js"></script>
 
-  <script src="javascripts/lib/leap-0.6.0-beta2-master.js"></script>
-  <script src="//js.leapmotion.com/leap-plugins-0.1.4.js"></script>
-
-  <script src="//js.leapmotion.com/leap.rigged-hand-0.1.1.js"></script>
+  <script src="//js.leapmotion.com/leap-0.6.0.js"></script>
+  <script src="//js.leapmotion.com/leap-plugins-0.1.6.js"></script>
+  <script src="//js.leapmotion.com/leap.rigged-hand-0.1.4.js"></script>
   <script src="../build/leap.playback-0.2.1.js"></script>
 
   <script src="javascripts/recorder.js"></script>
@@ -37,6 +36,7 @@
 </head>
 <body ng-app="Recorder">
 
+<!-- For the time being, this controller manages recordings which get used -->
 <div data-ng-controller="DataCollection" ng-show="mode != 'recording' && mode != 'off'">
 
   <section class="row" id="changeRecording" ng-animate="'animate'" ng-show="mode == 'intro'">
@@ -206,15 +206,11 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title">Options</h4>
+        <h4 class="modal-title">Metadata</h4>
       </div>
       <div class="modal-body">
-        <input type="checkbox" name="allow-background" id="allow-background" ng-model="allowBackground"/>
-        <label for="allow-background">Allow Background</label>
 
 
-        <h4 class="modal-title">Metadata</h4>
-        <hr>
 
         <table>
 

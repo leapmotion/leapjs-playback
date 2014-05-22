@@ -3,7 +3,7 @@
     '$scope', function($scope) {
       $scope.recordings = [
         {
-          url: 'recordings/PinchGesture-57fps.json.lz'
+          url: 'recordings/pinch-57fps.json.lz'
         }, {
           url: 'recordings/HandSplay-110fps.json.lz'
         }, {

@@ -968,7 +968,7 @@ Recording.prototype = {
 
     var newMetaData = {
       formatVersion: 2,
-      generatedBy: 'LeapJS Playback 0.2.0',
+      generatedBy: 'LeapJS Playback 0.2.1',
       frames: this.rightCropPosition - this.leftCropPosition,
       protocolVersion: this.options.requestProtocolVersion,
       serviceVersion: this.options.serviceVersion,
@@ -1210,8 +1210,7 @@ Recording.prototype = {
   loadFrameData: function (callback) {
     var xhr = new XMLHttpRequest(),
         url = this.url,
-        recording = this,
-        contentLength = 0;
+        recording = this;
 
     xhr.onreadystatechange = function () {
       if (xhr.readyState === xhr.DONE) {
