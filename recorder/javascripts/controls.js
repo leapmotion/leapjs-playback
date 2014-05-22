@@ -135,10 +135,6 @@
           case 47:
           case 63:
             return $('#helpModal').modal('show');
-          case 27:
-            console.log('esc');
-            $('#helpModal').modal('hide');
-            return $('#metadata').modal('hide');
           case 109:
             return $('#metadata').modal('toggle');
           default:

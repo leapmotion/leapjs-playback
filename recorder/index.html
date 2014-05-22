@@ -147,8 +147,8 @@
   </div>
 </div>
 
-
-<div class="modal fade" id="helpModal" ng-keypress="stripKeycodes($event)">
+<!-- Bootstrap requires tabindex=-1 for escape key :-/ -->
+<div class="modal fade" id="helpModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <!-- https://github.com/blog/273-github-ribbons -->
@@ -203,7 +203,7 @@
 </div>
 
 
-<div class="modal fade" id="metadata" data-ng-controller="Metadata" ng-keypress="$event.stopPropagation()">
+<div class="modal fade" id="metadata" data-ng-controller="Metadata" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
