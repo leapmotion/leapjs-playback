@@ -96,13 +96,15 @@
 
       <i class="glyphicon glyphicon-record" ng-class="{orange: recordPending(), red: recording()}"></i>
 
-      Record
+      <span class="hotkey">R</span>ecord
 
     </button>
 
     <button type="button" class="btn btn-default" ng-click="crop()" ng-class="{active: mode=='crop'}" ng-disabled="canPlayBack()" id="crop">
 
-      <span style="margin-top: -2px; display: inline-block; vertical-align: top;">[ ]</span> Crop
+      <span style="margin-top: -2px; display: inline-block; vertical-align: top;">[ ]</span>
+
+      <span class="hotkey">C</span>rop
 
     </button>
 
@@ -114,7 +116,7 @@
 
       <span ng-show="!player().loading() && pauseOnPlaybackButtonClick()"><i class="glyphicon glyphicon-pause"></i></span>
 
-      Playback
+      <span class="hotkey">P</span>layback
 
     </button>
 
