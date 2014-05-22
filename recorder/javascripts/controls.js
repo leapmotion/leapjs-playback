@@ -40,21 +40,22 @@
         }
       });
       $scope.record = function() {
-        if (player().state === 'recording' && !player().recordPending()) {
-          return player().finishRecording();
+        if (player().state === 'recording') {
+          if (player().recordPending()) {
+            return player().stop();
+          } else {
+            return player().finishRecording();
+          }
         } else {
           return player().record();
         }
       };
-      window.controller.on('playback.record', function(player) {
+      window.controller.on('playback.record', function() {
         return $scope.mode = 'record';
-      }).on('playback.play', function(player) {
+      }).on('playback.play', function() {
         $scope.pinHandle = 'min';
-        $scope.mode = 'playback';
-        return $scope.pause = false;
-      }).on('playback.pause', function(player) {
-        return $scope.pause = true;
-      }).on('playback.ajax:begin', function(player) {
+        return $scope.mode = 'playback';
+      }).on('playback.ajax:begin', function() {
         $scope.playback();
         if (!$scope.$$phase) {
           return $scope.$apply();
@@ -67,8 +68,12 @@
         return $scope.$apply();
       });
       $scope.crop = function() {
+        if ($scope.mode === 'record') {
+          player().recording.setFrames(player().recording.frameData);
+        }
         $scope.mode = 'crop';
         $scope.pinHandle = '';
+        player().playbackMode();
         setTimeout(function() {
           $scope.inDigestLoop = true;
           $scope.leftHandlePosition = player().recording.leftCropPosition;
@@ -76,7 +81,6 @@
           $scope.$apply();
           return $scope.inDigestLoop = false;
         }, 0);
-        player().pause();
         return setTimeout(function() {
           return player().sendFrame(player().recording.currentFrame());
         }, 0);
@@ -94,6 +98,9 @@
         return player().isRecording();
       };
       $scope.playback = function() {
+        if ($scope.mode === 'record') {
+          player().recording.setFrames(player().recording.frameData);
+        }
         return player().toggle();
       };
       $document.bind('keypress', function(e) {

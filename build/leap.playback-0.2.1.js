@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Playback - v0.2.1 - 2014-05-14                    
+ * LeapJS Playback - v0.2.1 - 2014-05-21                    
  * http://github.com/leapmotion/leapjs-playback/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -943,7 +943,6 @@ Recording.prototype = {
   // Accepts an optional `factor` integer, which is the number of frames
   // discarded for every frame kept.
   cullFrames: function (factor) {
-    console.log('cull frames', factor);
     factor || (factor = 1);
     for (var i = 0; i < this.frameData.length; i++) {
       this.frameData.splice(i, factor);
@@ -1265,8 +1264,6 @@ Recording.prototype = {
 
     this.metadata = responseData.metadata;
 
-    console.log('Recording loaded:', this.metadata);
-
     this.loading = false;
 
     if (callback) {
@@ -1363,8 +1360,8 @@ Recording.prototype = {
             } else if (data.hands.length == 0) {
               if (player.userHasControl) {
                 player.userHasControl = false;
-                player.controller.emit('playback.userReleaseControl');
                 player.setGraphic('wave');
+                player.controller.emit('playback.userReleaseControl');
               }
 
             }
@@ -1503,10 +1500,11 @@ Recording.prototype = {
     },
 
     toggle: function () {
-      if (this.state == 'idle') {
-        this.play();
-      } else if (this.state == 'playing') {
+      if (this.state == 'playing') {
         this.pause();
+      } else {
+        // handle recording, etc.
+        this.play();
       }
     },
 
@@ -1542,10 +1540,9 @@ Recording.prototype = {
     },
 
     finishRecording: function () {
-      // change to the playbackHandler which suppresses frames:
-      this.controller.connection.protocol = this.playbackProtocol;
+      this.idle();
       this.recording.setFrames(this.recording.frameData);
-      this.controller.emit('playback.recordingFinished', this)
+      this.controller.emit('playback.recordingFinished', this);
     },
 
 
@@ -1557,6 +1554,11 @@ Recording.prototype = {
       return this.recording.loading;
     },
 
+    playbackMode: function(){
+      this.state = 'idle';
+      this.controller.connection.protocol = this.playbackProtocol;
+    },
+
 
     /* Plays back the provided frame data
      * Params {object|boolean}:
@@ -1565,6 +1567,7 @@ Recording.prototype = {
      */
     play: function () {
       if (this.state === 'playing') return;
+
       if ( this.loading() || this.recording.blank() ) return;
 
       this.state = 'playing';
@@ -1575,8 +1578,10 @@ Recording.prototype = {
       // prevent the normal controller response while playing
       this.controller.connection.removeAllListeners('frame');
       this.controller.connection.on('frame', function (frame) {
-        // resume play when hands are removed:
-        if (player.autoPlay && player.state == 'idle' && frame.hands.length == 0) {
+
+         // resume play when hands are removed:
+        if (player.pauseOnHand && player.autoPlay && player.state == 'idle' && frame.hands.length == 0) {
+          player.controller.emit('playback.userReleaseControl');
           player.play();
         }
 
@@ -1601,6 +1606,8 @@ Recording.prototype = {
         this.recording.addFrame(frameData);
         this.hideOverlay();
       } else if ( !this.recording.blank() ) {
+        // play will detect state and emit recordingFinished
+        // this should actually be split out in to discrete end-recording-state and begin-play-state handlers :-/
         this.finishRecording();
       }
     },
@@ -1621,7 +1628,6 @@ Recording.prototype = {
         this.setFrames(frames);
 
         if (player.recording != this){
-          console.log('recordings changed during load');
           return
         }
 
