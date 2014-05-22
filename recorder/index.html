@@ -262,7 +262,7 @@
 
 
 <script>
-  (window.controller = new Leap.Controller)
+  (window.controller = new Leap.Controller({background: true}))
     .use('playback', {
       loop: false,
       pauseHotkey: false,
