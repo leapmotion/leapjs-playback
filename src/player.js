@@ -265,10 +265,9 @@
     },
 
     finishRecording: function () {
-      // change to the playbackHandler which suppresses frames:
-      this.controller.connection.protocol = this.playbackProtocol;
+      this.idle();
       this.recording.setFrames(this.recording.frameData);
-      this.controller.emit('playback.recordingFinished', this)
+      this.controller.emit('playback.recordingFinished', this);
     },
 
 
