@@ -3,7 +3,7 @@ leapjs-playback
 
 ## Demo
 
-[leapmotion.github.io/leapjs-playback/recorder](leapmotion.github.io/leapjs-playback/recorder)
+[leapmotion.github.io/leapjs-playback/recorder](http://leapmotion.github.io/leapjs-playback/recorder)
 
 
 ## About
