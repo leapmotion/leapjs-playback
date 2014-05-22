@@ -62,6 +62,45 @@ window.recorder.controller 'DataCollection', ['$scope', ($scope)->
   $scope.currentRecordingIndex = 0
   $scope.setCurrentRecording()
 
+  dropArea = $('#dropzone')
+  $scope.watchForDragEvents = ->
+    document.body.addEventListener "dragover", (event)->
+      event.stopPropagation()
+      event.preventDefault()
+
+      dropArea.show()
+    , false
+
+    document.body.addEventListener "drop", (event)->
+      event.stopPropagation()
+      event.preventDefault()
+
+      dropArea.hide()
+
+      file = event.dataTransfer.files[0];
+
+      unless file.name.match '[\.lz|\.json]$'
+        console.warn "Invalid file type:", File.name
+        return
+
+      reader = new FileReader();
+      reader.onload = ((file)->
+        (event)->
+          console.log 'file', file, event.target.result.substr(0, 30) + '...'
+
+          recording = new(player().Recording)
+          recording.url = file.name
+          recording.readFileData(event.target.result)
+          player().setRecording(recording).play()
+      )(file)
+
+      reader.readAsText(file);
+
+    , false
+
+
+  $scope.watchForDragEvents()
+
   $scope.replay = (e)->
     $(e.originalEvent.target).closest('button').get(0).blur()
     player().play()

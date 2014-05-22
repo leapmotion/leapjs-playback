@@ -1,6 +1,7 @@
 (function() {
   window.recorder.controller('DataCollection', [
     '$scope', function($scope) {
+      var dropArea;
       $scope.recordings = [
         {
           url: 'recordings/pinch-57fps.json.lz'
@@ -63,6 +64,38 @@
       };
       $scope.currentRecordingIndex = 0;
       $scope.setCurrentRecording();
+      dropArea = $('#dropzone');
+      $scope.watchForDragEvents = function() {
+        document.body.addEventListener("dragover", function(event) {
+          event.stopPropagation();
+          event.preventDefault();
+          return dropArea.show();
+        }, false);
+        return document.body.addEventListener("drop", function(event) {
+          var file, reader;
+          event.stopPropagation();
+          event.preventDefault();
+          dropArea.hide();
+          file = event.dataTransfer.files[0];
+          if (!file.name.match('[\.lz|\.json]$')) {
+            console.warn("Invalid file type:", File.name);
+            return;
+          }
+          reader = new FileReader();
+          reader.onload = (function(file) {
+            return function(event) {
+              var recording;
+              console.log('file', file, event.target.result.substr(0, 30) + '...');
+              recording = new (player().Recording);
+              recording.url = file.name;
+              recording.readFileData(event.target.result);
+              return player().setRecording(recording).play();
+            };
+          })(file);
+          return reader.readAsText(file);
+        }, false);
+      };
+      $scope.watchForDragEvents();
       $scope.replay = function(e) {
         $(e.originalEvent.target).closest('button').get(0).blur();
         return player().play();

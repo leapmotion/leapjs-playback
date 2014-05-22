@@ -259,6 +259,11 @@ Recording.prototype = {
     for (var key in newMetaData) {
       this.metadata[key] = newMetaData[key];
     }
+
+    if (!this.metadata.title && this.url){
+      this.metadata.title = this.url.replace(/(\.json)?(\.lz)?$/, '')
+    }
+
   },
 
   // returns an array
@@ -495,7 +500,7 @@ Recording.prototype = {
         if (xhr.status === 200 || xhr.status === 0) {
           if (xhr.responseText) {
 
-            recording.finishLoad(xhr.responseText, callback);
+            recording.readFileData(xhr.responseText, callback);
 
           } else {
             console.error('Leap Playback: "' + url + '" seems to be unreachable or the file is empty.');
@@ -525,7 +530,7 @@ Recording.prototype = {
     xhr.send(null);
   },
 
-  finishLoad: function(responseData, callback){
+  readFileData: function(responseData, callback){
 
     var url = this.url;
 
@@ -540,6 +545,8 @@ Recording.prototype = {
     }
 
     this.metadata = responseData.metadata;
+
+    this.setFrames(responseData.frames);
 
     this.loading = false;
 

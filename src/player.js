@@ -7,7 +7,8 @@
     var player = this;
     options || (options = {});
 
-//    this.frameData = [];
+    // make sure Recording is accessible externally.
+    this.Recording = Recording;
 
     this.options = options;
     this.recording = options.recording;
@@ -356,8 +357,6 @@
       // this is called on the context of the recording
       var loadComplete = function (frames) {
 
-        this.setFrames(frames);
-
         if (player.recording != this){
           return
         }
@@ -503,13 +502,13 @@
 
     }
 
-
     scope.player = new Player(this, {
       recording: scope.recording,
       loop: loop,
       pauseHotkey: pauseHotkey,
       timeBetweenLoops: timeBetweenLoops
     });
+
 
     // By doing this, we allow player methods to be accessible on the scope
     // this is the controller

@@ -981,6 +981,11 @@ Recording.prototype = {
     for (var key in newMetaData) {
       this.metadata[key] = newMetaData[key];
     }
+
+    if (!this.metadata.title && this.url){
+      this.metadata.title = this.url.replace(/(\.json)?(\.lz)?$/, '')
+    }
+
   },
 
   // returns an array
@@ -1217,7 +1222,7 @@ Recording.prototype = {
         if (xhr.status === 200 || xhr.status === 0) {
           if (xhr.responseText) {
 
-            recording.finishLoad(xhr.responseText, callback);
+            recording.readFileData(xhr.responseText, callback);
 
           } else {
             console.error('Leap Playback: "' + url + '" seems to be unreachable or the file is empty.');
@@ -1247,7 +1252,7 @@ Recording.prototype = {
     xhr.send(null);
   },
 
-  finishLoad: function(responseData, callback){
+  readFileData: function(responseData, callback){
 
     var url = this.url;
 
@@ -1262,6 +1267,8 @@ Recording.prototype = {
     }
 
     this.metadata = responseData.metadata;
+
+    this.setFrames(responseData.frames);
 
     this.loading = false;
 
@@ -1281,7 +1288,8 @@ Recording.prototype = {
     var player = this;
     options || (options = {});
 
-//    this.frameData = [];
+    // make sure Recording is accessible externally.
+    this.Recording = Recording;
 
     this.options = options;
     this.recording = options.recording;
@@ -1630,8 +1638,6 @@ Recording.prototype = {
       // this is called on the context of the recording
       var loadComplete = function (frames) {
 
-        this.setFrames(frames);
-
         if (player.recording != this){
           return
         }
@@ -1777,13 +1783,13 @@ Recording.prototype = {
 
     }
 
-
     scope.player = new Player(this, {
       recording: scope.recording,
       loop: loop,
       pauseHotkey: pauseHotkey,
       timeBetweenLoops: timeBetweenLoops
     });
+
 
     // By doing this, we allow player methods to be accessible on the scope
     // this is the controller
