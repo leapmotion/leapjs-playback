@@ -279,6 +279,11 @@
       return this.recording.loading;
     },
 
+    playbackMode: function(){
+      this.state = 'idle';
+      this.controller.connection.protocol = this.playbackProtocol;
+    },
+
 
     /* Plays back the provided frame data
      * Params {object|boolean}:
@@ -287,6 +292,7 @@
      */
     play: function () {
       if (this.state === 'playing') return;
+
       if ( this.loading() || this.recording.blank() ) return;
 
       this.state = 'playing';
@@ -297,8 +303,10 @@
       // prevent the normal controller response while playing
       this.controller.connection.removeAllListeners('frame');
       this.controller.connection.on('frame', function (frame) {
-        // resume play when hands are removed:
-        if (player.autoPlay && player.state == 'idle' && frame.hands.length == 0) {
+
+         // resume play when hands are removed:
+        if (player.pauseOnHand && player.autoPlay && player.state == 'idle' && frame.hands.length == 0) {
+          player.controller.emit('playback.userReleaseControl');
           player.play();
         }
 
@@ -323,6 +331,8 @@
         this.recording.addFrame(frameData);
         this.hideOverlay();
       } else if ( !this.recording.blank() ) {
+        // play will detect state and emit recordingFinished
+        // this should actually be split out in to discrete end-recording-state and begin-play-state handlers :-/
         this.finishRecording();
       }
     },
@@ -343,7 +353,6 @@
         this.setFrames(frames);
 
         if (player.recording != this){
-          console.log('recordings changed during load');
           return
         }
 
