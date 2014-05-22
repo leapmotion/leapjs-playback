@@ -225,10 +225,11 @@
     },
 
     toggle: function () {
-      if (this.state == 'idle') {
-        this.play();
-      } else if (this.state == 'playing') {
+      if (this.state == 'playing') {
         this.pause();
+      } else {
+        // handle recording, etc.
+        this.play();
       }
     },
 
