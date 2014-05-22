@@ -32,8 +32,11 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
       document.getElementById('crop').blur()
 
   $scope.record = ->
-    if player().state == 'recording' && !player().recordPending()
-      player().finishRecording()
+    if player().state == 'recording'
+      if player().recordPending()
+        player().stop()
+      else
+        player().finishRecording()
     else
       player().record()
 
