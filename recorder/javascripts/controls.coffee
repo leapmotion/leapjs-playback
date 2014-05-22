@@ -137,8 +137,8 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
         $scope.playback()
       when 115
         $scope.save()
-      when 47, 63
-        $('#helpModal').modal('show')
+      when 47, 63, 105 # /, ?, i
+        $('#helpModal').modal('toggle')
       when 109
         $('#metadata').modal('toggle')
       else

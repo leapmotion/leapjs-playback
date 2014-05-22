@@ -120,15 +120,6 @@
 
     </button>
 
-    <!--
-    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-      <span class="caret"></span>
-    </button>
-    <ul class="dropdown-menu" role="menu" style="right: 0; left: auto; min-width: 154px;">
-      <li><a href="#" ng-click="load()">Upload</a></li>
-    </ul>
-    -->
-
   </div>
 
 
@@ -142,9 +133,15 @@
       <li><a href="#" ng-click="save()"><b>Compressed</b></a></li>
       <li><a href="#" ng-click="save('json')">As JSON</a></li>
     </ul>
-    <!-- todo: angular router, show metadata -->
-    <!--<a href="#">Options</a>-->
   </div>
+
+  <div class="pull-right">
+    <a href="#" onclick="$('#helpModal').modal('toggle')">
+      <!-- todo: should change href to help and use angular router.. -->
+      <i class="glyphicon glyphicon-info-sign help-modal-control"></i>
+    </a>
+  </div>
+
 </div>
 
 <!--
@@ -199,8 +196,6 @@
             </tr>
           </table>
       </div>
-      <!-- Usage ... todo -->
-      <!-- Fork me on github -->
     </div>
   </div>
 </div>
@@ -265,8 +260,6 @@
           </tr>
         </table>
       </div>
-      <!-- Usage ... todo -->
-      <!-- Fork me on github -->
     </div>
   </div>
 </div>

@@ -134,7 +134,8 @@
             return $scope.save();
           case 47:
           case 63:
-            return $('#helpModal').modal('show');
+          case 105:
+            return $('#helpModal').modal('toggle');
           case 109:
             return $('#metadata').modal('toggle');
           default:

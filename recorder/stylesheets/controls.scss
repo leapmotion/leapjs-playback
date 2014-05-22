@@ -1,20 +1,26 @@
-#controls {
+#controls{
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
   text-align: center;
-  z-index: 20; }
+  z-index: 20;
+}
 
-.hotkey {
-  text-decoration: underline; }
+.hotkey{
+  text-decoration: underline;
+}
 
-.help-modal-control {
+.help-modal-control{
   color: #005d98;
   padding: 8px;
   font-size: 29px;
   margin-left: -45px;
   -webkit-transition: color 0.1s ease-out;
-  transition: color 0.1s ease-out; }
-  .help-modal-control:hover {
-    color: #0088ce; }
+          transition: color 0.1s ease-out;
+
+  &:hover{
+    color: #0088ce;
+  }
+
+}
