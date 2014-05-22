@@ -148,7 +148,7 @@
  Bootstrap requires tabindex=-1 for escape key :-/
  http://stackoverflow.com/questions/12630156/how-do-you-enable-the-escape-key-close-functionality-in-a-twitter-bootstrap-moda
  -->
-<div class="modal fade" id="helpModal" tabindex="-1" ng-keypress="stripKeycodes($event)">
+<div class="modal fade" id="helpModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <!-- https://github.com/blog/273-github-ribbons -->
@@ -217,7 +217,7 @@
           <tr>
             <td>title</td>
             <td>
-              <a href="#" editable-text="metadata.title" ng-keypress="stripAllKeycodes($event)">
+              <a href="#" editable-text="metadata.title">
                 {{metadata.title || 'Edit'}}
               </a>
             </td>
@@ -225,7 +225,7 @@
           <tr>
             <td>description</td>
             <td>
-              <a href="#" editable-textarea="metadata.description" e-rows="2" e-cols="40" ng-keypress="stripAllKeycodes($event)">
+              <a href="#" editable-textarea="metadata.description" e-rows="2" e-cols="40">
                 {{metadata.description || 'Edit'}}
               </a>
             </td>
