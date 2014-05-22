@@ -241,7 +241,13 @@
       this.stop();
       this.state = 'recording';
       this.controller.connection.protocol = this.recordProtocol;
-      this.setGraphic('connect');
+
+      if (!this.controller.streaming()) {
+        this.setGraphic('connect');
+      }
+      // If already showing connect, setGraphic will have no effect.
+      this.showOverlay();
+
       this.controller.emit('playback.record', this)
     },
 
@@ -412,6 +418,11 @@
     hideOverlay: function () {
       if (!this.overlay) return;
       this.overlay.style.display = 'none';
+    },
+
+    showOverlay: function () {
+      if (!this.overlay) return;
+      this.overlay.style.display = 'block';
     },
 
 

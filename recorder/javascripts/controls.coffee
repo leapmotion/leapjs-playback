@@ -157,7 +157,7 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
     $scope.inDigestLoop = true
     $scope.$apply ->
       if $scope.mode == 'playback'
-        $scope.leftHandlePosition = player().recording.leftCropPosition
+        $scope.leftHandlePosition  = player().recording.leftCropPosition
         $scope.rightHandlePosition = player().recording.frameIndex
     $scope.inDigestLoop = false
 
