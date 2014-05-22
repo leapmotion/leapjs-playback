@@ -85,8 +85,8 @@
             } else if (data.hands.length == 0) {
               if (player.userHasControl) {
                 player.userHasControl = false;
-                player.controller.emit('playback.userReleaseControl');
                 player.setGraphic('wave');
+                player.controller.emit('playback.userReleaseControl');
               }
 
             }
