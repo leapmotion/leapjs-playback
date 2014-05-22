@@ -17,13 +17,13 @@ canvas {
   z-index: 20;
 }
 .glyphicon.orange{
-  color: orange;
+  color: #f2c52c;
   text-shadow: 0px 0px 3px orange;
   -webkit-animation: pulsate 3s ease-in-out;
   -webkit-animation-iteration-count: infinite;
 }
 .glyphicon.red{
-  color: red;
+  color: #de3950;
   text-shadow: 0px 0px 3px red;
 }
 
@@ -109,4 +109,13 @@ canvas {
     opacity: 0;
     top: -50px;
     height: 0px;
+}
+
+
+.ngrs-range-slider .ngrs-join{
+  background-color: #005d98;
+  background-image: -webkit-linear-gradient(#0088ce, #005d98);
+  background-image: -moz-linear-gradient(#0088ce, #005d98);
+  background-image: -o-linear-gradient(#0088ce, #005d98);
+  background-image: linear-gradient(#0088ce, #005d98);
 }
