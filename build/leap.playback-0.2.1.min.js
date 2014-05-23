@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Playback - v0.2.1 - 2014-05-21                    
+ * LeapJS Playback - v0.2.1 - 2014-05-22                    
  * http://github.com/leapmotion/leapjs-playback/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    

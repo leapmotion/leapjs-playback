@@ -6,9 +6,6 @@
 
   <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="stylesheets/lib/angular.rangeSlider.css">
-  <link rel="stylesheet" href="stylesheets/main.css">
-  <link rel="stylesheet" href="stylesheets/controls.css">
-  <link rel="stylesheet" href="stylesheets/data-collection.css">
 
   <script src="javascripts/lib/jquery-2.1.0.min.js"></script>
   <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
@@ -20,6 +17,13 @@
 
   <link href="bower_components/angular-xeditable/dist/css/xeditable.css" rel="stylesheet">
   <script src="bower_components/angular-xeditable/dist/js/xeditable.js"></script>
+
+  <link href="bower_components/highlightjs/styles/default.css" rel="stylesheet">
+  <script src="bower_components/highlightjs/highlight.pack.js"></script>
+
+  <link rel="stylesheet" href="stylesheets/main.css">
+  <link rel="stylesheet" href="stylesheets/controls.css">
+  <link rel="stylesheet" href="stylesheets/data-collection.css">
 
   <script src="javascripts/lib/three.min.js"></script>
   <script src="javascripts/lib/TrackballControls.js"></script>
@@ -207,6 +211,18 @@
               </td>
             </tr>
           </table>
+        <br/>
+        <div class="pull-right" style="margin-top: 1em;">
+          <a href="https://github.com/leapmotion/leapjs-playback" target="_blank">Docs</a>
+        </div>
+        <h4>Usage</h4>
+        <hr/>
+<pre><code>  var controller = new Leap.Controller();
+  controller
+    .use('playback', {
+      frames: 'leap-playback-recording-110fps.json.lz'
+    })
+    .connect()</code></pre>
       </div>
     </div>
   </div>
@@ -272,8 +288,10 @@
   </div>
 </div>
 
+<script>hljs.initHighlightingOnLoad();</script>
 
 <script>
+
   (window.controller = new Leap.Controller({background: true}))
     .use('playback', {
       loop: false,
