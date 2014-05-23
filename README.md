@@ -18,7 +18,7 @@ after leap.js.  Playback does not affect the `Leap.controller` until you `use` i
 ```javascript
 var controller = new Leap.Controller();
 controller
-  .use('playback', {frames: 'demo.json'})
+  .use('playback', {recording: 'demo.json'})
   .connect()
 
 ```
