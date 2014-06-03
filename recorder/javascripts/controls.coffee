@@ -1,9 +1,14 @@
 # note that there a couple of times where $scope.$$phase is checked -- some severe code smell
 # it would be better to perhaps provide leap as a resource, and make things more proper.
 
-window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($scope, $location, $document)->
+window.recorder.controller 'Controls', ['$scope', '$location', '$document', '$analytics', ($scope, $location, $document, $analytics)->
   $scope.recordingLength = ->
     Math.max( player().recording.frameData.length - 1, 0 )
+
+  track = (action, options = {})->
+    options.category = 'controls'
+    $analytics.eventTrack('record', options)
+
 
   $scope.mode = ''
   $scope.leftHandlePosition
@@ -39,6 +44,7 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
         player().finishRecording()
     else
       player().record()
+      track 'record'
 
   window.controller
 
@@ -56,6 +62,7 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
 
   ).on( 'playback.recordingFinished', ->
     if player().loaded()
+      track('recordFinished', {value: player().recording.frameData.length})
       # this appears to cause playback
       $scope.crop()
 
@@ -68,7 +75,7 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
   $scope.crop = ->
     if $scope.mode == 'record'
       # same as .finishRecording(), but won't fire event
-      player().recording.setFrames(player().recording.frameData);
+      player().recording.setFrames(player().recording.frameData)
 
     $scope.mode = 'crop'
     $scope.pinHandle = ''
@@ -89,6 +96,8 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
     setTimeout(->
       player().sendFrame(player().recording.currentFrame())
     , 0)
+    
+    track('crop')
 
   $scope.pauseOnPlaybackButtonClick = ->
     $scope.mode == 'playback' && player().state != 'idle'
@@ -106,9 +115,10 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
   $scope.playback = ()->
     if $scope.mode == 'record'
       # same as .finishRecording(), but won't fire event
-      player().recording.setFrames(player().recording.frameData);
+      player().recording.setFrames(player().recording.frameData)
 
     player().toggle()
+    track('playback')
 
 
   $document.bind 'keypress', (e)->
@@ -129,6 +139,7 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
           document.body.mozRequestFullScreen()
         else if (document.body.webkitRequestFullscreen)
           document.body.webkitRequestFullscreen()
+        track('fullscreen')
       when 114
         $scope.record()
       when 99
@@ -159,6 +170,10 @@ window.recorder.controller 'Controls', ['$scope', '$location', '$document', ($sc
 
 
   $scope.save = (format)->
-    player().recording.save(format);
+    player().recording.save(format)
+    track('save', {label: format})
+
+  $('#metadata, #helpModal').on 'shown.bs.modal', ->
+    track($(@).attr('id') + "Shown")
 
 ]
