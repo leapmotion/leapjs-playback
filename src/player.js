@@ -361,12 +361,9 @@
           return
         }
 
-        // it would be better to use streamingCount here, but that won't be in until 0.5.0+
-        // For now, it just flashes for a moment until the first frame comes through with a hand on it.
-        // if (autoPlay && (controller.streamingCount == 0 || pauseOnHand)) {
         if (player.autoPlay) {
           player.play();
-          if (player.pauseOnHand) {
+          if ( player.pauseOnHand && !controller.streaming() ) {
             player.setGraphic('connect');
           }
         }
