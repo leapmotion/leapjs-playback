@@ -143,7 +143,7 @@
 
       this.lastFrameTime = now;
 
-      console.assert(!isNaN(this.timeSinceLastFrame));
+//      console.assert(!isNaN(this.timeSinceLastFrame));
 
 
       var timeToNextFrame;
@@ -452,6 +452,7 @@
   // - overlay: [boolean or DOM element] Whether or not to show the overlay: "Connect your Leap Motion Controller"
   //            if a DOM element is passed, that will be shown/hidden instead of the default message.
   // - pauseOnHand: [boolean true] Whether to stop playback when a hand is in field of view
+  // - resumeOnHandLost: [boolean true] Whether to stop playback when a hand is in field of view
   // - requiredProtocolVersion: clients connected with a lower protocol number will not be able to take control of the
   // - timeBetweenLoops: [number, ms] delay between looping playback
   // controller with their device.  This option, if set, ovverrides autoPlay
