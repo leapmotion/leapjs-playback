@@ -19,7 +19,11 @@ function Recording (options){
       'stabilizedPalmPosition',
       'pinchStrength',
       'grabStrength',
-      'confidence'
+      'confidence',
+      'armBasis',
+      'armWidth',
+      'elbow',
+      'wrist'
       // leaving out r, s, t, sphereCenter, sphereRadius
     ]]},
     {pointables: [[

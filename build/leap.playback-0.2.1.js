@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Playback - v0.2.1 - 2014-05-22                    
+ * LeapJS Playback - v0.2.1 - 2014-10-29                    
  * http://github.com/leapmotion/leapjs-playback/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -741,7 +741,11 @@ function Recording (options){
       'stabilizedPalmPosition',
       'pinchStrength',
       'grabStrength',
-      'confidence'
+      'confidence',
+      'armBasis',
+      'armWidth',
+      'elbow',
+      'wrist'
       // leaving out r, s, t, sphereCenter, sphereRadius
     ]]},
     {pointables: [[
@@ -879,7 +883,7 @@ Recording.prototype = {
           t
         );
 
-        console.assert(hand[prop]);
+//        console.assert(hand[prop]);
       }
 
     }
@@ -920,7 +924,7 @@ Recording.prototype = {
     if (elapsedTime < 0) {
       elapsedTime = this.timeBetweenLoops; //arbitrary pause at slightly less than 30 fps.
     }
-    console.assert(!isNaN(elapsedTime));
+//    console.assert(!isNaN(elapsedTime));
     return elapsedTime;
   },
 
@@ -1026,6 +1030,8 @@ Recording.prototype = {
 
       if ( typeof  nameOrHash === 'string'){
 
+        if (nameOrHash == 'width') debugger;
+
         out.push(
           data[nameOrHash]
         );
@@ -1044,13 +1050,13 @@ Recording.prototype = {
 
       } else { // key-value (nested object) such as interactionBox
 
-        console.assert(nameOrHash);
+//        console.assert(nameOrHash);
 
         for (var key in nameOrHash) break;
 
-        console.assert(key);
-        console.assert(nameOrHash[key]);
-        console.assert(data[key]);
+//        console.assert(key);
+//        console.assert(nameOrHash[key]);
+//        console.assert(data[key]);
 
         out.push(this.packArray(
           nameOrHash[key],
@@ -1424,7 +1430,7 @@ Recording.prototype = {
 
       this.lastFrameTime = now;
 
-      console.assert(!isNaN(this.timeSinceLastFrame));
+//      console.assert(!isNaN(this.timeSinceLastFrame));
 
 
       var timeToNextFrame;
@@ -1642,12 +1648,9 @@ Recording.prototype = {
           return
         }
 
-        // it would be better to use streamingCount here, but that won't be in until 0.5.0+
-        // For now, it just flashes for a moment until the first frame comes through with a hand on it.
-        // if (autoPlay && (controller.streamingCount == 0 || pauseOnHand)) {
         if (player.autoPlay) {
           player.play();
-          if (player.pauseOnHand) {
+          if ( player.pauseOnHand && !controller.streaming() ) {
             player.setGraphic('connect');
           }
         }
@@ -1736,6 +1739,7 @@ Recording.prototype = {
   // - overlay: [boolean or DOM element] Whether or not to show the overlay: "Connect your Leap Motion Controller"
   //            if a DOM element is passed, that will be shown/hidden instead of the default message.
   // - pauseOnHand: [boolean true] Whether to stop playback when a hand is in field of view
+  // - resumeOnHandLost: [boolean true] Whether to stop playback when a hand is in field of view
   // - requiredProtocolVersion: clients connected with a lower protocol number will not be able to take control of the
   // - timeBetweenLoops: [number, ms] delay between looping playback
   // controller with their device.  This option, if set, ovverrides autoPlay
