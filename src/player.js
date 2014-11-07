@@ -300,7 +300,7 @@
     play: function () {
       if (this.state === 'playing') return;
 
-      if ( this.loading() || this.recording.blank() ) return;
+      if ( !this.recording || this.loading() || this.recording.blank() ) return;
 
       this.state = 'playing';
       this.controller.connection.protocol = this.playbackProtocol;
