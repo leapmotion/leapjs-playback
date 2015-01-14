@@ -6,7 +6,8 @@ module.exports = (grunt) ->
     pkg: grunt.file.readJSON("package.json")
     watch: {
       options: {
-        livereload: true
+        livereload: true,
+        atBegin: true
       }
       css: {
         files: ['recorder/stylesheets/*.scss'],
