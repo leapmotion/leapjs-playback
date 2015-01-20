@@ -56,7 +56,22 @@
       this.stepFrameLoop = function (timestamp) {
         if (player.state != 'playing') return;
 
-        player.sendFrameAt(timestamp || performance.now());
+        if (player.options.lockStep){
+
+          // same as in sendFrameAt:
+          if (!player.recording.advanceFrame()){
+            player.pause();
+            player.controller.emit('playback.playbackFinished', player);
+            return
+          }
+
+          player.sendFrame( player.recording.currentFrame() );
+
+        } else {
+
+          player.sendFrameAt(timestamp || performance.now());
+
+        }
 
         requestAnimationFrame(player.stepFrameLoop);
       };
@@ -457,6 +472,8 @@
   // - timeBetweenLoops: [number, ms] delay between looping playback
   // controller with their device.  This option, if set, ovverrides autoPlay
   // - pauseHotkey: [number or false, default: 32 (spacebar)] - keycode for pause, bound to body
+  // - lockStep: replays one recording frame per animation frame, exactly. Rather than trying to preserve playback
+  // speed of the original recording.
   var playback = function (scope) {
     var controller = this;
     var autoPlay = scope.autoPlay;
@@ -475,6 +492,9 @@
 
     var loop = scope.loop;
     if (loop === undefined) loop = true;
+
+    var lockStep = scope.lockStep ;
+    if (lockStep  === undefined) lockStep  = false;
 
     var overlay = scope.overlay;
     // A better fix would be to set an onload handler for this, rather than disable the overlay.
@@ -504,7 +524,8 @@
       recording: scope.recording,
       loop: loop,
       pauseHotkey: pauseHotkey,
-      timeBetweenLoops: timeBetweenLoops
+      timeBetweenLoops: timeBetweenLoops,
+      lockStep: lockStep
     });
 
 
