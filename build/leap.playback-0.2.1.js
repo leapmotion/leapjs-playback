@@ -1,8 +1,8 @@
 /*                    
- * LeapJS Playback - v0.2.1 - 2014-10-29                    
+ * LeapJS Playback - v0.2.1 - 2015-01-20                    
  * http://github.com/leapmotion/leapjs-playback/                    
  *                    
- * Copyright 2014 LeapMotion, Inc                    
+ * Copyright 2015 LeapMotion, Inc                    
  *                    
  * Licensed under the Apache License, Version 2.0 (the "License");                    
  * you may not use this file except in compliance with the License.                    
@@ -1030,8 +1030,6 @@ Recording.prototype = {
 
       if ( typeof  nameOrHash === 'string'){
 
-        if (nameOrHash == 'width') debugger;
-
         out.push(
           data[nameOrHash]
         );
@@ -1262,11 +1260,13 @@ Recording.prototype = {
 
     var url = this.url;
 
-    if (url.split('.')[url.split('.').length - 1] == 'lz') {
+    if (url && url.split('.')[url.split('.').length - 1] == 'lz') {
       responseData = this.decompress(responseData);
     }
 
-    responseData = JSON.parse(responseData);
+    if ( Leap._.isString(responseData) ) {
+      responseData = JSON.parse(responseData);
+    }
 
     if (responseData.metadata.formatVersion == 2) {
       responseData.frames = this.unPackFrameData(responseData.frames);
@@ -1343,7 +1343,22 @@ Recording.prototype = {
       this.stepFrameLoop = function (timestamp) {
         if (player.state != 'playing') return;
 
-        player.sendFrameAt(timestamp || performance.now());
+        if (player.options.lockStep){
+
+          // same as in sendFrameAt:
+          if (!player.recording.advanceFrame()){
+            player.pause();
+            player.controller.emit('playback.playbackFinished', player);
+            return
+          }
+
+          player.sendFrame( player.recording.currentFrame() );
+
+        } else {
+
+          player.sendFrameAt(timestamp || performance.now());
+
+        }
 
         requestAnimationFrame(player.stepFrameLoop);
       };
@@ -1456,6 +1471,8 @@ Recording.prototype = {
 
       var frame = new Leap.Frame(frameData);
 
+      this.controller.emit('playback.beforeSendFrame', frameData, frame);
+
       // send a deviceFrame to the controller:
       // this frame gets picked up by the controllers own animation loop.
 
@@ -1476,6 +1493,7 @@ Recording.prototype = {
 
     setFrameIndex: function (frameIndex) {
       if (frameIndex != this.recording.frameIndex) {
+        if (frameIndex < 0) frameIndex = this.recording.frameCount - 1;
         this.recording.frameIndex = frameIndex % this.recording.frameCount;
         this.sendFrame(this.recording.currentFrame());
       }
@@ -1587,7 +1605,7 @@ Recording.prototype = {
     play: function () {
       if (this.state === 'playing') return;
 
-      if ( this.loading() || this.recording.blank() ) return;
+      if ( !this.recording || this.loading() || this.recording.blank() ) return;
 
       this.state = 'playing';
       this.controller.connection.protocol = this.playbackProtocol;
@@ -1744,6 +1762,8 @@ Recording.prototype = {
   // - timeBetweenLoops: [number, ms] delay between looping playback
   // controller with their device.  This option, if set, ovverrides autoPlay
   // - pauseHotkey: [number or false, default: 32 (spacebar)] - keycode for pause, bound to body
+  // - lockStep: replays one recording frame per animation frame, exactly. Rather than trying to preserve playback
+  // speed of the original recording.
   var playback = function (scope) {
     var controller = this;
     var autoPlay = scope.autoPlay;
@@ -1762,6 +1782,9 @@ Recording.prototype = {
 
     var loop = scope.loop;
     if (loop === undefined) loop = true;
+
+    var lockStep = scope.lockStep ;
+    if (lockStep  === undefined) lockStep  = false;
 
     var overlay = scope.overlay;
     // A better fix would be to set an onload handler for this, rather than disable the overlay.
@@ -1791,7 +1814,8 @@ Recording.prototype = {
       recording: scope.recording,
       loop: loop,
       pauseHotkey: pauseHotkey,
-      timeBetweenLoops: timeBetweenLoops
+      timeBetweenLoops: timeBetweenLoops,
+      lockStep: lockStep
     });
 
 
