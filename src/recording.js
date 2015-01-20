@@ -538,11 +538,13 @@ Recording.prototype = {
 
     var url = this.url;
 
-    if (url.split('.')[url.split('.').length - 1] == 'lz') {
+    if (url && url.split('.')[url.split('.').length - 1] == 'lz') {
       responseData = this.decompress(responseData);
     }
 
-    responseData = JSON.parse(responseData);
+    if ( Leap._.isString(responseData) ) {
+      responseData = JSON.parse(responseData);
+    }
 
     if (responseData.metadata.formatVersion == 2) {
       responseData.frames = this.unPackFrameData(responseData.frames);
