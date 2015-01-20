@@ -184,6 +184,8 @@
 
       var frame = new Leap.Frame(frameData);
 
+      this.controller.emit('playback.beforeSendFrame', frameData, frame);
+
       // send a deviceFrame to the controller:
       // this frame gets picked up by the controllers own animation loop.
 
