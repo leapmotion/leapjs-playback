@@ -206,6 +206,7 @@
 
     setFrameIndex: function (frameIndex) {
       if (frameIndex != this.recording.frameIndex) {
+        if (frameIndex < 0) frameIndex = this.recording.frameCount - 1;
         this.recording.frameIndex = frameIndex % this.recording.frameCount;
         this.sendFrame(this.recording.currentFrame());
       }
